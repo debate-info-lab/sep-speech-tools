@@ -6,6 +6,7 @@
 
 #include <mecab.h>
 
+#include "speechcounter.h"
 #include "utility.h"
 
 MainWindow::MainWindow(QWidget *parent) :
@@ -24,7 +25,11 @@ MainWindow::MainWindow(QWidget *parent) :
 }
 
 MainWindow::~MainWindow()
-{}
+{
+    if ( tagger ) {
+        MeCab::deleteTagger(tagger);
+    }
+}
 
 void MainWindow::initializeTagger(QString dictPath, QString userDictPath)
 {
@@ -35,14 +40,14 @@ void MainWindow::initializeTagger(QString dictPath, QString userDictPath)
     }
     QString taggerArgs;
     if ( userDictPath.isEmpty() ) {
-        taggerArgs = QString("-d %1").arg(dictPath);
+        taggerArgs = QString("-U Unknown -d %1").arg(dictPath);
     } else {
-        taggerArgs = QString("-d %1 -u %2").arg(dictPath).arg(userDictPath);
+        taggerArgs = QString("-U Unknown -d %1 -u %2").arg(dictPath).arg(userDictPath);
     }
-    this->tagger = QSharedPointer<MeCab::Tagger>(MeCab::Tagger::create(toLocalEncoding(taggerArgs).constData()));
+    this->tagger = MeCab::Tagger::create(toLocalEncoding(taggerArgs).constData());
 }
 
-void MainWindow::setTextInformation(int charCount, int speechCount) const
+void MainWindow::setTextInformation(int charCount, int speechCount)
 {
     QString message;
     if ( speechCount < 0 ) {
@@ -55,15 +60,11 @@ void MainWindow::setTextInformation(int charCount, int speechCount) const
 
 void MainWindow::on_textEdit_textChanged()
 {
-    QString text = this->ui->textEdit->toPlainText();
+    QString text = this->ui->textEdit->toPlainText().normalized(QString::NormalizationForm_KC);
 
     QString serialized(text);
     serialized.remove(QRegExp("\\s+"));
 
-    int speechCount = -1;
-    if ( this->tagger ) {
-        speechCount = getSpeechCount(this->tagger, text);
-    }
-
-    this->setTextInformation(serialized.size(), speechCount);
+    SpeechCounter counter(this->tagger);
+    this->setTextInformation(serialized.size(), counter.getSpeechCount(text));
 }

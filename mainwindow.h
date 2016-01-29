@@ -23,16 +23,16 @@ public:
     ~MainWindow();
 
     void initializeTagger(QString dictPath, QString userDictPath=QString());
-    void setTextInformation(int charCount, int speechCount) const;
 
 public slots:
     void on_textEdit_textChanged();
+    void setTextInformation(int charCount, int speechCount);
 
 private:
     QSharedPointer<Ui::MainWindow> ui;
     QSharedPointer<QSettings> settings;
 
-    QSharedPointer<MeCab::Tagger> tagger;
+    MeCab::Tagger *tagger;
 
 };
 

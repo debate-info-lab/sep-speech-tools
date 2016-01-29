@@ -16,11 +16,13 @@ CONFIG += c++11
 SOURCES += \
     main.cpp \
     mainwindow.cpp \
-    utility.cpp
+    utility.cpp \
+    speechcounter.cpp
 
 HEADERS  += \
     mainwindow.h \
-    utility.h
+    utility.h \
+    speechcounter.h
 
 FORMS    += mainwindow.ui
 
