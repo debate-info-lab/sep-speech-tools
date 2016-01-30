@@ -17,7 +17,8 @@ MainWindow::MainWindow(QWidget *parent) :
 #elif defined(Q_OS_WIN32) || defined(Q_OS_CYGWIN)
     settings(new QSettings(QSettings::IniFormat, QSettings::UserScope)),
 #endif
-    tagger(nullptr)
+    tagger(nullptr),
+    speechCounter()
 {
     this->ui->setupUi(this);
 
@@ -65,6 +66,6 @@ void MainWindow::on_textEdit_textChanged()
     QString serialized(text);
     serialized.remove(QRegExp("\\s+"));
 
-    SpeechCounter counter(this->tagger);
-    this->setTextInformation(serialized.size(), counter.getSpeechCount(text));
+    this->speechCounter = QSharedPointer<SpeechCounter>(new SpeechCounter(this->tagger, text));
+    this->setTextInformation(serialized.size(), this->speechCounter->getSpeechCount());
 }

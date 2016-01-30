@@ -14,6 +14,8 @@ namespace MeCab {
 class Tagger;
 }
 
+class SpeechCounter;
+
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
@@ -33,6 +35,7 @@ private:
     QSharedPointer<QSettings> settings;
 
     MeCab::Tagger *tagger;
+    QSharedPointer<SpeechCounter> speechCounter;
 
 };
 

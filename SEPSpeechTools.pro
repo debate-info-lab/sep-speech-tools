@@ -17,12 +17,14 @@ SOURCES += \
     main.cpp \
     mainwindow.cpp \
     utility.cpp \
-    speechcounter.cpp
+    speechcounter.cpp \
+    mecabnode.cpp
 
 HEADERS  += \
     mainwindow.h \
     utility.h \
-    speechcounter.h
+    speechcounter.h \
+    mecabnode.h
 
 FORMS    += mainwindow.ui
 

@@ -5,28 +5,30 @@
 
 #include <QRegExp>
 
-#include <mecab.h>
+#include "mecabnode.h"
 
 class SpeechCounter : public QObject
 {
     Q_OBJECT
 public:
-    explicit SpeechCounter(MeCab::Tagger *tagger, QObject *parent = 0);
+    explicit SpeechCounter(MeCab::Tagger *tagger, const QString &sentence, QObject *parent = 0);
     ~SpeechCounter();
 
-    int getSpeechCount(const QString &text);
+    int getSpeechCount();
 
 private:
-    int nodeToSpeechCount(const MeCab::Node *node) const;
+    int nodeToSpeechCount(const MeCabNode &node) const;
     int calcSpeechCount(QString speech) const;
 
-    QString KIGOU;
-    QString KUTEN;
+    const QString KIGOU;
+    const QString KUTEN;
 
     QRegExp katakana;
     QRegExp youon_kigou;
 
     MeCab::Tagger *tagger;
+    QString sentence;
+    MeCabResult nodes;
 
 };
 
