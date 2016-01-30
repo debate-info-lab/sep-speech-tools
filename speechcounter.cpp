@@ -13,7 +13,7 @@ SpeechCounter::SpeechCounter(MeCab::Tagger *tagger, const QString &sentence, QOb
     KIGOU(QString::fromUtf8(u8"\u8a18\u53f7")),
     KUTEN(QString::fromUtf8(u8"\u3002")),
     katakana(QString::fromUtf8(u8"[\u30a1-\u30fc]+")),
-    youon_kigou(QString::fromUtf8(u8"[\u30a1\u30a3\u30a5\u30a7\u30a9\u30c3\u30e3\u30e5\u30e7\u30fb]")),
+    youon_kigou(QString::fromUtf8(u8"[\u30a1\u30a3\u30a5\u30a7\u30a9\u30e3\u30e5\u30e7\u30ee\u30fb]")),
     tagger(tagger),
     sentence(sentence),
     nodes()

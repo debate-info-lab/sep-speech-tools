@@ -34,13 +34,13 @@
         <translation></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="67"/>
+        <location filename="mainwindow.cpp" line="68"/>
         <source>%1 chars</source>
         <translation>%1文字</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="69"/>
-        <source>%1 chars, %2 syllabic</source>
+        <location filename="mainwindow.cpp" line="70"/>
+        <source>%1 chars, %2 syllable</source>
         <translation>%1文字 %2音</translation>
     </message>
 </context>

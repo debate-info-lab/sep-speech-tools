@@ -67,7 +67,7 @@ void MainWindow::setTextInformation(int charCount, int speechCount)
     if ( speechCount < 0 ) {
         message = tr("%1 chars").arg(charCount);
     } else {
-        message = tr("%1 chars, %2 syllabic").arg(charCount).arg(speechCount);
+        message = tr("%1 chars, %2 syllable").arg(charCount).arg(speechCount);
     }
     this->ui->statusBar->showMessage(message, 0);
 }
