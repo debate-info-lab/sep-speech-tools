@@ -27,6 +27,9 @@ public:
     void initializeTagger(QString dictPath, QString userDictPath=QString());
 
 public slots:
+    // actions
+    void on_actionShowRuby_triggered();
+
     void on_textEdit_textChanged();
     void setTextInformation(int charCount, int speechCount);
 

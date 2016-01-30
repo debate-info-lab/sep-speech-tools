@@ -3,6 +3,7 @@
 
 #include <QDir>
 #include <QSettings>
+#include <QWebView>
 
 #include <mecab.h>
 
@@ -46,6 +47,17 @@ void MainWindow::initializeTagger(QString dictPath, QString userDictPath)
         taggerArgs = QString("-U Unknown -d %1 -u %2").arg(dictPath).arg(userDictPath);
     }
     this->tagger = MeCab::Tagger::create(toLocalEncoding(taggerArgs).constData());
+}
+
+void MainWindow::on_actionShowRuby_triggered()
+{
+    if ( ! this->speechCounter ) {
+        return;
+    }
+
+    QWebView *view = new QWebView(nullptr);
+    view->setHtml(this->speechCounter->toRubyHtml());
+    view->show();
 }
 
 void MainWindow::setTextInformation(int charCount, int speechCount)

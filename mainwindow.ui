@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>MainWindow</string>
+   <string>SEPSpeechTools</string>
   </property>
   <widget class="QWidget" name="centralWidget">
    <layout class="QVBoxLayout" name="verticalLayout">
@@ -35,12 +35,24 @@
     </property>
     <addaction name="actionExit"/>
    </widget>
+   <widget class="QMenu" name="menuResult">
+    <property name="title">
+     <string>Result</string>
+    </property>
+    <addaction name="actionShowRuby"/>
+   </widget>
    <addaction name="menuFile"/>
+   <addaction name="menuResult"/>
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
   <action name="actionExit">
    <property name="text">
     <string>Exit</string>
+   </property>
+  </action>
+  <action name="actionShowRuby">
+   <property name="text">
+    <string>ShowRuby</string>
    </property>
   </action>
  </widget>

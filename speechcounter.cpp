@@ -41,6 +41,26 @@ int SpeechCounter::getSpeechCount()
     return ret;
 }
 
+QString SpeechCounter::toRubyHtml() const
+{
+    QString result = "<head>" \
+                     "<style>" \
+                     "body { font-size: large; }" \
+                     ".no-ruby { background-color: red; color: white; }" \
+                     "</style>" \
+                     "</head>" \
+                     "<body>";
+    for ( const MeCabNode &item : this->nodes ) {
+        if ( item.hasSpeech() ) {
+            result += QString("<ruby>%1<rt>%2</rt></ruby>").arg(item.surface()).arg(item.speech());
+        } else {
+            result += QString("<span class=\"no-ruby\">%1</span>").arg(item.surface());
+        }
+    }
+    result += "</body>";
+    return result;
+}
+
 int SpeechCounter::nodeToSpeechCount(const MeCabNode &node) const
 {
     // special cases

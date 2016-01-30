@@ -16,6 +16,8 @@ public:
 
     int getSpeechCount();
 
+    QString toRubyHtml() const;
+
 private:
     int nodeToSpeechCount(const MeCabNode &node) const;
     int calcSpeechCount(QString speech) const;
