@@ -31,7 +31,7 @@ public slots:
     void on_actionShowRuby_triggered();
 
     void on_textEdit_textChanged();
-    void setTextInformation(int charCount, int speechCount);
+    void setTextInformation(int charCount, double speechCount);
 
 private:
     QSharedPointer<Ui::MainWindow> ui;

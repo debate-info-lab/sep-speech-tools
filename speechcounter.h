@@ -14,19 +14,20 @@ public:
     explicit SpeechCounter(MeCab::Tagger *tagger, const QString &sentence, QObject *parent = 0);
     ~SpeechCounter();
 
-    int getSpeechCount();
+    double getSpeechCount();
 
     QString toRubyHtml() const;
 
 private:
-    int nodeToSpeechCount(const MeCabNode &node) const;
-    int calcSpeechCount(QString speech) const;
+    double nodeToSpeechCount(const MeCabNode &node) const;
+    double calcSpeechCount(QString speech) const;
 
     const QString KIGOU;
     const QString KUTEN;
 
     QRegExp katakana;
     QRegExp youon_kigou;
+    QRegExp sokuon;
 
     MeCab::Tagger *tagger;
     QString sentence;

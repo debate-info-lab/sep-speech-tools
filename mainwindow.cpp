@@ -61,7 +61,7 @@ void MainWindow::on_actionShowRuby_triggered()
     view->show();
 }
 
-void MainWindow::setTextInformation(int charCount, int speechCount)
+void MainWindow::setTextInformation(int charCount, double speechCount)
 {
     QString message;
     if ( speechCount < 0 ) {

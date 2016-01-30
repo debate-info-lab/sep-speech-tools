@@ -14,6 +14,7 @@ SpeechCounter::SpeechCounter(MeCab::Tagger *tagger, const QString &sentence, QOb
     KUTEN(QString::fromUtf8(u8"\u3002")),
     katakana(QString::fromUtf8(u8"[\u30a1-\u30fc]+")),
     youon_kigou(QString::fromUtf8(u8"[\u30a1\u30a3\u30a5\u30a7\u30a9\u30e3\u30e5\u30e7\u30ee\u30fb]")),
+    sokuon(QString::fromUtf8(u8"[\u30c3]")),
     tagger(tagger),
     sentence(sentence),
     nodes()
@@ -24,7 +25,7 @@ SpeechCounter::~SpeechCounter()
 {
 }
 
-int SpeechCounter::getSpeechCount()
+double SpeechCounter::getSpeechCount()
 {
     if ( ! this->tagger ) {
         return -1;
@@ -34,7 +35,7 @@ int SpeechCounter::getSpeechCount()
     const MeCab::Node *node = this->tagger->parseToNode(utf8.constData(), utf8.size());
     this->nodes = MeCabNode::create_nodes(node);
 
-    int ret = 0;
+    double ret = 0;
     for (const MeCabNode &item : this->nodes) {
         ret += this->nodeToSpeechCount(item);
     }
@@ -61,7 +62,7 @@ QString SpeechCounter::toRubyHtml() const
     return result;
 }
 
-int SpeechCounter::nodeToSpeechCount(const MeCabNode &node) const
+double SpeechCounter::nodeToSpeechCount(const MeCabNode &node) const
 {
     // special cases
     if ( node.surface().isEmpty() ) {
@@ -88,11 +89,12 @@ int SpeechCounter::nodeToSpeechCount(const MeCabNode &node) const
     }
 }
 
-int SpeechCounter::calcSpeechCount(QString speech) const
+double SpeechCounter::calcSpeechCount(QString speech) const
 {
     if ( this->katakana.exactMatch(speech) ) {
         speech.remove(this->youon_kigou);
-        return speech.size();
+        int half_char = speech.split(this->sokuon).size() - 1;
+        return speech.size() - half_char + 0.5 * half_char;
     } else {
         // TODO:
         qDebug() << speech;
