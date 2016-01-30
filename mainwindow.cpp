@@ -41,13 +41,29 @@ void MainWindow::initializeTagger(QString dictPath, QString userDictPath)
         dir.cd("dict");
         dictPath = this->settings->value("dict/system", dir.absolutePath()).toString();
     }
-    QString taggerArgs;
-    if ( userDictPath.isEmpty() ) {
-        taggerArgs = QString("-U Unknown -d %1").arg(dictPath);
-    } else {
-        taggerArgs = QString("-U Unknown -d %1 -u %2").arg(dictPath).arg(userDictPath);
+    // build args
+    QStringList taggerArgs;
+    taggerArgs.append("-U");
+    taggerArgs.append("Unknown");
+    taggerArgs.append("-d");
+    taggerArgs.append(dictPath);
+    if ( ! userDictPath.isEmpty() ) {
+        taggerArgs.append("-u");
+        taggerArgs.append(userDictPath);
     }
-    this->tagger = MeCab::Tagger::create(toLocalEncoding(taggerArgs).constData());
+    // unicode args to raw args
+    QList<QByteArray> args;
+    for ( const QString &arg : taggerArgs ) {
+        args.append(arg.toUtf8());
+    }
+    // raw args to argv
+    QScopedPointer<char *> argv(new char *[args.size()]);
+    int argc = 0;
+    for ( QByteArray &arg : args ) {
+        argv.data()[argc++] = arg.data();
+    }
+    // create tagger
+    this->tagger = MeCab::Tagger::create(argc, argv.data());
 }
 
 void MainWindow::on_actionShowRuby_triggered()
