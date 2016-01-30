@@ -7,6 +7,7 @@
 
 #include <mecab.h>
 
+#include "autocursor.h"
 #include "speechcounter.h"
 #include "utility.h"
 
@@ -73,6 +74,9 @@ void MainWindow::setTextInformation(int charCount, int speechCount)
 
 void MainWindow::on_textEdit_textChanged()
 {
+    BusyAutoCursor cursor(this);
+    Q_UNUSED(cursor);
+
     QString text = this->ui->textEdit->toPlainText().normalized(QString::NormalizationForm_KC);
 
     QString serialized(text);
