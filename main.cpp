@@ -28,7 +28,7 @@ int main(int argc, char *argv[])
     }
 
     QTranslator appTr;
-    if ( qtTr.load("SEPSpeechTools_" + QLocale::system().name(), ":/i18n") ) {
+    if ( appTr.load("SEPSpeechTools_" + QLocale::system().name(), ":/i18n") ) {
         a.installTranslator(&appTr);
     }
 
