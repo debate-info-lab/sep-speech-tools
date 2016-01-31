@@ -8,6 +8,7 @@
 #include <mecab.h>
 
 #include "autocursor.h"
+#include "preferencedialog.h"
 #include "speechcounter.h"
 #include "utility.h"
 
@@ -19,6 +20,7 @@ MainWindow::MainWindow(QWidget *parent) :
 #elif defined(Q_OS_WIN32) || defined(Q_OS_CYGWIN)
     settings(new QSettings(QSettings::IniFormat, QSettings::UserScope, QCoreApplication::organizationName())),
 #endif
+    preference(new PreferenceDialog(this->settings)),
     tagger(nullptr),
     speechCounter()
 {
@@ -36,10 +38,11 @@ MainWindow::~MainWindow()
 
 void MainWindow::initializeTagger(QString dictPath, QString userDictPath)
 {
-    QDir dictDir(QCoreApplication::applicationDirPath());
-    dictDir.cd("dict");
     if ( dictPath.isEmpty() ) {
-        dictPath = this->settings->value("dict/system", dictDir.absolutePath()).toString();
+        dictPath = this->preference->getSysDictDir();
+    }
+    if ( userDictPath.isEmpty() ) {
+        userDictPath = this->preference->getUserDictFile();
     }
     // build args
     QStringList taggerArgs;
@@ -47,8 +50,9 @@ void MainWindow::initializeTagger(QString dictPath, QString userDictPath)
     taggerArgs.append("-U");
     taggerArgs.append("Unknown");
 #if defined(Q_OS_WIN)
+    QDir appDir(QCoreApplication::applicationDirPath());
     taggerArgs.append("-r");
-    taggerArgs.append(dictDir.filePath("mecabrc"));
+    taggerArgs.append(appDir.filePath("mecabrc"));
 #endif
     taggerArgs.append("-d");
     taggerArgs.append(dictPath + "/");
@@ -80,6 +84,14 @@ void MainWindow::on_actionShowRuby_triggered()
     QWebView *view = new QWebView(nullptr);
     view->setHtml(this->speechCounter->toRubyHtml());
     view->show();
+}
+
+void MainWindow::on_actionPreference_triggered()
+{
+    if ( this->preference->exec() == QDialog::Accepted ) {
+        this->preference->saveSettings();
+        this->initializeTagger(QString());  // from new settings
+    }
 }
 
 void MainWindow::setTextInformation(int charCount, double speechCount)

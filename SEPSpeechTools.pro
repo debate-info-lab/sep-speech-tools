@@ -19,20 +19,20 @@ SOURCES += \
     utility.cpp \
     speechcounter.cpp \
     mecabnode.cpp \
-    autocursor.cpp
+    autocursor.cpp \
+    preferencedialog.cpp
 
 HEADERS  += \
     mainwindow.h \
     utility.h \
     speechcounter.h \
     mecabnode.h \
-    autocursor.h
+    autocursor.h \
+    preferencedialog.h
 
-FORMS    += mainwindow.ui
-
-lessThan(QT_MAJOR_VERSION, 5): QMAKE_CXXFLAGS += -std=c++11
-
-LIBS += -lmecab
+FORMS    += \
+    mainwindow.ui \
+    preferencedialog.ui
 
 TRANSLATIONS = \
     SEPSpeechTools_ja.ts
@@ -40,6 +40,10 @@ TRANSLATIONS = \
 RESOURCES += \
     resources.qrc
 
+unix{
+    lessThan(QT_MAJOR_VERSION, 5): QMAKE_CXXFLAGS += -std=c++11
+    LIBS += -lmecab
+}
 win32{
-include(config/windows.pri)
+    include(config/windows.pri)
 }

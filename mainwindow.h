@@ -14,6 +14,7 @@ namespace MeCab {
 class Tagger;
 }
 
+class PreferenceDialog;
 class SpeechCounter;
 
 class MainWindow : public QMainWindow
@@ -29,6 +30,7 @@ public:
 public slots:
     // actions
     void on_actionShowRuby_triggered();
+    void on_actionPreference_triggered();
 
     void on_textEdit_textChanged();
     void setTextInformation(int charCount, double speechCount);
@@ -36,6 +38,7 @@ public slots:
 private:
     QSharedPointer<Ui::MainWindow> ui;
     QSharedPointer<QSettings> settings;
+    QSharedPointer<PreferenceDialog> preference;
 
     MeCab::Tagger *tagger;
     QSharedPointer<SpeechCounter> speechCounter;
