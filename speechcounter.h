@@ -27,7 +27,9 @@ private:
     QString numToKanji(const QString &numstr) const;
 
     const QString KIGOU;
+    const QString TOUTEN;
     const QString KUTEN;
+    const QString PERCENT;
 
     QRegExp katakana;
     QRegExp youon_kigou;

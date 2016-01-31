@@ -13,7 +13,9 @@
 SpeechCounter::SpeechCounter(MeCab::Tagger *tagger, const QString &sentence, QObject *parent) :
     QObject(parent),
     KIGOU(QString::fromUtf8(u8"\u8a18\u53f7")),
+    TOUTEN(QString::fromUtf8(u8"\u3001")),
     KUTEN(QString::fromUtf8(u8"\u3002")),
+    PERCENT("%"),
     katakana(QString::fromUtf8(u8"[\u30a1-\u30fc]+")),
     youon_kigou(QString::fromUtf8(u8"[\u30a1\u30a3\u30a5\u30a7\u30a9\u30e3\u30e5\u30e7\u30ee\u30fb]")),
     sokuon(QString::fromUtf8(u8"[\u30c3]")),
@@ -54,12 +56,24 @@ QString SpeechCounter::toRubyHtml() const
                      "<style>" \
                      "body { font-size: large; }" \
                      ".no-ruby { background-color: red; color: white; }" \
+                     ".kigou { background-color: grey; color: white; }" \
                      "</style>" \
                      "</head>" \
                      "<body>";
     for ( const MeCabNode &item : this->nodes ) {
-        if ( item.hasSpeech() ) {
+        QString surface = item.surface();
+        // counted special case
+        if ( surface == this->TOUTEN || surface == this->KUTEN ) {
+            result += item.surface();
+        } else if ( surface == this->PERCENT ) {
+            result += QString::fromUtf8("<ruby>%1<rt>\u30d1\u30fc\u30bb\u30f3\u30c8</rt></ruby>").arg(item.surface());
+        // uncounted special case
+        } else if ( item.parts() == this->KIGOU ) {
+            result += QString("<span class=\"kigou\">%1</span>").arg(item.surface());
+        // speech
+        } else if ( item.hasSpeech() ) {
             result += QString("<ruby>%1<rt>%2</rt></ruby>").arg(item.surface()).arg(item.speech());
+        // unknown
         } else {
             result += QString("<span class=\"no-ruby\">%1</span>").arg(item.surface());
         }
@@ -84,6 +98,9 @@ double SpeechCounter::nodeToSpeechCount(const MeCabNode &node) const
         // IDEOGRAPHIC FULL STOP special case
         if ( node.surface() == this->KUTEN ) {
             return 1;
+        // FULLWIDTH PERCENT SIGN special case
+        } else if ( node.surface() == this->PERCENT ) {
+            return 5;
         }
         return 0;
     }
@@ -131,13 +148,14 @@ QString SpeechCounter::heuristicNormalize(QString sentence) const
 
 QString SpeechCounter::numToKanji(const QString &numstr) const
 {
+    // from <http://neu101.seesaa.net/article/159968583.html>
+
     QList<int> nums;
     for ( const QChar &ch : numstr ) {
         assert( ch.toLatin1() - 0x30 >= 0 && ch.toLatin1() - 0x30 <= 9 );
         nums.insert(0, ch.toLatin1() - 0x30);  // ch - '0'
     }
-    int mod = (4 - nums.size() % 4) & 3;
-    qDebug() << numstr << "mod:" << mod;
+    int mod = (4 - nums.size() % 4) % 4;
     for ( int i = 0; i < mod; ++i ) {
         nums.append(0);
     }
