@@ -39,3 +39,7 @@ TRANSLATIONS = \
 
 RESOURCES += \
     resources.qrc
+
+win32{
+include(config/windows.pri)
+}

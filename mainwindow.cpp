@@ -17,7 +17,7 @@ MainWindow::MainWindow(QWidget *parent) :
 #if defined(Q_OS_LINUX)
     settings(new QSettings()),
 #elif defined(Q_OS_WIN32) || defined(Q_OS_CYGWIN)
-    settings(new QSettings(QSettings::IniFormat, QSettings::UserScope)),
+    settings(new QSettings(QSettings::IniFormat, QSettings::UserScope, QCoreApplication::organizationName())),
 #endif
     tagger(nullptr),
     speechCounter()
@@ -36,17 +36,22 @@ MainWindow::~MainWindow()
 
 void MainWindow::initializeTagger(QString dictPath, QString userDictPath)
 {
+    QDir dictDir(QCoreApplication::applicationDirPath());
+    dictDir.cd("dict");
     if ( dictPath.isEmpty() ) {
-        QDir dir(QCoreApplication::applicationDirPath());
-        dir.cd("dict");
-        dictPath = this->settings->value("dict/system", dir.absolutePath()).toString();
+        dictPath = this->settings->value("dict/system", dictDir.absolutePath()).toString();
     }
     // build args
     QStringList taggerArgs;
+    taggerArgs.append(QCoreApplication::applicationFilePath()); // argv[0]
     taggerArgs.append("-U");
     taggerArgs.append("Unknown");
+#if defined(Q_OS_WIN)
+    taggerArgs.append("-r");
+    taggerArgs.append(dictDir.filePath("mecabrc"));
+#endif
     taggerArgs.append("-d");
-    taggerArgs.append(dictPath);
+    taggerArgs.append(dictPath + "/");
     if ( ! userDictPath.isEmpty() ) {
         taggerArgs.append("-u");
         taggerArgs.append(userDictPath);
@@ -54,7 +59,7 @@ void MainWindow::initializeTagger(QString dictPath, QString userDictPath)
     // unicode args to raw args
     QList<QByteArray> args;
     for ( const QString &arg : taggerArgs ) {
-        args.append(arg.toUtf8());
+        args.append(toLocalEncoding(arg));
     }
     // raw args to argv
     QScopedPointer<char *> argv(new char *[args.size()]);
