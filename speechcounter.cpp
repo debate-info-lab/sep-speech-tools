@@ -133,8 +133,8 @@ QString SpeechCounter::numToKanji(const QString &numstr) const
 {
     QList<int> nums;
     for ( const QChar &ch : numstr ) {
-        assert( ch.toAscii() - 0x30 >= 0 && ch.toAscii() - 0x30 <= 9 );
-        nums.insert(0, ch.toAscii() - 0x30);  // ch - '0'
+        assert( ch.toLatin1() - 0x30 >= 0 && ch.toLatin1() - 0x30 <= 9 );
+        nums.insert(0, ch.toLatin1() - 0x30);  // ch - '0'
     }
     int mod = (4 - nums.size() % 4) & 3;
     qDebug() << numstr << "mod:" << mod;
