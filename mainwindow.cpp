@@ -10,6 +10,7 @@
 #include "autocursor.h"
 #include "preferencedialog.h"
 #include "speechcounter.h"
+#include "speechdialog.h"
 #include "utility.h"
 
 MainWindow::MainWindow(QWidget *parent) :
@@ -22,7 +23,8 @@ MainWindow::MainWindow(QWidget *parent) :
 #endif
     preference(new PreferenceDialog(this->settings)),
     tagger(nullptr),
-    speechCounter()
+    speechCounter(),
+    speechDialog(new SpeechDialog)
 {
     this->ui->setupUi(this);
 
@@ -81,9 +83,8 @@ void MainWindow::on_actionShowRuby_triggered()
         return;
     }
 
-    QWebView *view = new QWebView(nullptr);
-    view->setHtml(this->speechCounter->toRubyHtml());
-    view->show();
+    this->speechDialog->setSpeechCounter(this->speechCounter);
+    this->speechDialog->show();
 }
 
 void MainWindow::on_actionPreference_triggered()

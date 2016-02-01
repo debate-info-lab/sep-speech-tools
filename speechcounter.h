@@ -17,14 +17,17 @@ public:
     double getSpeechCount();
 
     QString toRubyHtml() const;
+    QString toSpeech() const;
 
 private:
     double nodeToSpeechCount(const MeCabNode &node) const;
     double calcSpeechCount(QString speech) const;
 
     QString heuristicNormalize(QString sentence) const;
-
     QString numToKanji(const QString &numstr) const;
+
+    void heuristicInitialize() const;
+    QString heuristicSpeech(const QString &surface) const;
 
     const QString KIGOU;
     const QString TOUTEN;
@@ -34,6 +37,8 @@ private:
     QRegExp katakana;
     QRegExp youon_kigou;
     QRegExp sokuon;
+
+    QRegExp ascii;
 
     QRegExp commas;
     QString numKanji;

@@ -6,7 +6,7 @@
 
 QT       += core gui webkit
 
-greaterThan(QT_MAJOR_VERSION, 4): QT += widgets webkitwidgets
+greaterThan(QT_MAJOR_VERSION, 4): QT += widgets webkitwidgets multimedia
 
 TARGET = SEPSpeechTools
 TEMPLATE = app
@@ -20,7 +20,10 @@ SOURCES += \
     speechcounter.cpp \
     mecabnode.cpp \
     autocursor.cpp \
-    preferencedialog.cpp
+    preferencedialog.cpp \
+    speechsynthesizer.cpp \
+    speechdialog.cpp \
+    speechworker.cpp
 
 HEADERS  += \
     mainwindow.h \
@@ -28,11 +31,15 @@ HEADERS  += \
     speechcounter.h \
     mecabnode.h \
     autocursor.h \
-    preferencedialog.h
+    preferencedialog.h \
+    speechsynthesizer.h \
+    speechdialog.h \
+    speechworker.h
 
 FORMS    += \
     mainwindow.ui \
-    preferencedialog.ui
+    preferencedialog.ui \
+    speechdialog.ui
 
 TRANSLATIONS = \
     SEPSpeechTools_ja.ts
@@ -41,9 +48,10 @@ RESOURCES += \
     resources.qrc
 
 unix{
-    lessThan(QT_MAJOR_VERSION, 5): QMAKE_CXXFLAGS += -std=c++11
-    LIBS += -lmecab
+    include(config/unix.pri)
+    include(config/unix_path.pri)
 }
 win32{
     include(config/windows.pri)
+    include(config/windows_path.pri)
 }

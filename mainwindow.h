@@ -16,6 +16,7 @@ class Tagger;
 
 class PreferenceDialog;
 class SpeechCounter;
+class SpeechDialog;
 
 class MainWindow : public QMainWindow
 {
@@ -42,6 +43,7 @@ private:
 
     MeCab::Tagger *tagger;
     QSharedPointer<SpeechCounter> speechCounter;
+    QSharedPointer<SpeechDialog> speechDialog;
 
 };
 

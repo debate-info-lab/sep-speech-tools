@@ -1,1 +1,4 @@
 *.pri
+
+!unix.pri
+!windows.pri
