@@ -90,7 +90,9 @@ QString SpeechCounter::toSpeech() const
 {
     QString result;
     for ( const MeCabNode &item : this->nodes ) {
-        if ( item.hasSpeech() && item.speech() != "*" ) {
+        if ( item.hasSpeech() && item.speech() != "*" && item.parts() != this->KIGOU ) {
+            result += item.speech();
+        } else if ( item.surface() == this->TOUTEN || item.surface() == this->KUTEN ) {
             result += item.speech();
         } else {
             result += this->heuristicSpeech(item.surface());

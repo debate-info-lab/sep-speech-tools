@@ -10,6 +10,7 @@
 #endif
 
 #include <QFileDialog>
+#include <QMessageBox>
 
 #include "autocursor.h"
 #include "speechcounter.h"
@@ -101,14 +102,8 @@ void SpeechDialog::setSpeechCounter(const QSharedPointer<SpeechCounter> &counter
 
 void SpeechDialog::on_pushButtonSave_clicked()
 {
-    QString filePath = QFileDialog::getSaveFileName(this, tr("Save file name"), QString(), tr("Wave (*.wav)"));
-    if ( filePath.isEmpty() ) {
-        return;
-    }
-    QFileInfo info(filePath);
-    if ( info.suffix() != ".wav" ) {
-        filePath += ".wav";
-    }
+    BusyAutoCursor cursor(this);
+    Q_UNUSED(cursor);
 
     QString speech = this->speechCounter->toSpeech();
     if ( speech.isEmpty() ) {
@@ -117,11 +112,21 @@ void SpeechDialog::on_pushButtonSave_clicked()
 
     QByteArray wave = this->speechSynthesizer->synthesize(speech);
     if ( wave.isEmpty() ) {
+        QMessageBox::information(this, tr("Failed"), tr("Failed to synthesize."));
         return;
     }
 
-    BusyAutoCursor cursor(this);
-    Q_UNUSED(cursor);
+    QString filePath = QFileDialog::getSaveFileName(this, tr("Save file name"), QString(), tr("Wave (*.wav)"));
+    if ( filePath.isEmpty() ) {
+        return;
+    }
+#if defined(Q_OS_UNIX)
+    QFileInfo info(filePath);
+    if ( info.suffix() != "wav" ) {
+        filePath += ".wav";
+    }
+#endif
+
     QFile file(filePath);
     if ( ! file.open(QIODevice::WriteOnly) ) {
         return;

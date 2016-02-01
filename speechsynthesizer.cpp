@@ -1,5 +1,7 @@
 #include "speechsynthesizer.h"
 
+#include <QDebug>
+
 class SpeechSynthesizerImpl
 {
 public:
@@ -41,6 +43,8 @@ public:
 
 #elif defined(Q_OS_WIN)
 
+#include <QCoreApplication>
+
 #include "windows/dynamiclinklibrary.hpp"
 
 static const QString AQUESTALK_DEFAULT_PATH = "AquesTalk/f1/AquesTalk.dll";
@@ -52,7 +56,7 @@ public:
     typedef void ( __stdcall *AquesTalk_FreeWaveDef)(unsigned char *wav);
 
     WindowsSpeechSynthesizerImpl() :
-        WindowsSpeechSynthesizerImpl(AQUESTALK_DEFAULT_PATH)
+        WindowsSpeechSynthesizerImpl(QCoreApplication::applicationDirPath() + "/" + AQUESTALK_DEFAULT_PATH)
     {}
     WindowsSpeechSynthesizerImpl(const QString &path) :
         library(new DynamicLoadLibrary),
@@ -76,6 +80,7 @@ public:
         int size = 0;
         unsigned char *ptr = AquesTalk_Synthe(indata.constData(), 100, &size);
         if ( ! ptr ) {
+            qDebug() << size;
             return QByteArray();
         }
         QByteArray result(reinterpret_cast<char *>(ptr), size);
@@ -108,7 +113,8 @@ QByteArray SpeechSynthesizer::synthesize(const QString &data)
     if ( ! this->impl ) {
         return QByteArray();
     }
-    return this->impl->synthesize(data);
+    QString TOUTEN = QString::fromUtf8(u8"\u3001");
+    return this->impl->synthesize(data.trimmed().replace(QRegExp("\\s+"), TOUTEN));
 }
 
 
