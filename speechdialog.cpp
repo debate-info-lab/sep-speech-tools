@@ -129,6 +129,7 @@ void SpeechDialog::on_pushButtonSave_clicked()
 
     QFile file(filePath);
     if ( ! file.open(QIODevice::WriteOnly) ) {
+        QMessageBox::warning(this, tr("Failed"), tr("Failed to write."));
         return;
     }
     file.write(wave);
