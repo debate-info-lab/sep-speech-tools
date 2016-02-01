@@ -4,15 +4,13 @@
 #include <QBuffer>
 #include <QDialog>
 #include <QSharedPointer>
-
-#if QT_VERSION >= 0x050000
-#include <QAudioFormat>
 #include <QThread>
+
+#if USE_MULTIMEDIA
+#include <QAudioFormat>
 
 class QAudioDecoder;
 class QAudioOutput;
-
-class SpeechWorker;
 #endif
 
 namespace Ui {
@@ -21,6 +19,7 @@ class SpeechDialog;
 
 class SpeechCounter;
 class SpeechSynthesizer;
+class SpeechWorker;
 
 class SpeechDialog : public QDialog
 {
@@ -33,6 +32,7 @@ public:
     void setSpeechCounter(const QSharedPointer<SpeechCounter> &counter);
 
 public slots:
+    void on_pushButtonSave_clicked();
     void on_toolButtonPlay_clicked();
     void on_toolButtonStop_clicked();
 
@@ -41,14 +41,12 @@ private slots:
 
 private:
     QSharedPointer<Ui::SpeechDialog> ui;
-    QByteArray audioData;
-    QSharedPointer<QBuffer> audioBuffer;
-#if QT_VERSION >= 0x050000
-    QThread audioThread;
-    QSharedPointer<SpeechWorker> speechWorker;
+#if USE_MULTIMEDIA
     QAudioFormat format;
     QSharedPointer<QAudioOutput> output;
 #endif
+    QThread audioThread;
+    QSharedPointer<SpeechWorker> speechWorker;
 
     QSharedPointer<SpeechCounter> speechCounter;
     QSharedPointer<SpeechSynthesizer> speechSynthesizer;
