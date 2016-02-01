@@ -3,6 +3,8 @@
 class SpeechSynthesizerImpl
 {
 public:
+    virtual ~SpeechSynthesizerImpl()
+    {}
     virtual QByteArray synthesize(const QString &data) = 0;
 
 };

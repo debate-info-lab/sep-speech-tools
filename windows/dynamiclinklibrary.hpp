@@ -29,7 +29,7 @@ public:
 
         const QByteArray rawPath = toLocalEncoding(path);
 #if defined(Q_OS_WIN)
-        this->instance = LoadLibrary(rawPath.constData());
+        this->instance = LoadLibraryA(rawPath.constData());
         if ( ! this->instance ) {
             return false;
         }
@@ -41,7 +41,7 @@ public:
     bool finalize()
     {
         if ( ! this->loaded_ ) {
-            return;
+            return false;
         }
 #if defined(Q_OS_WIN)
         BOOL ret = FreeLibrary(this->instance);
