@@ -3,10 +3,7 @@
 
 #if USE_MULTIMEDIA
 #include <QAudio>
-#include <QAudioDecoder>
 #include <QAudioFormat>
-#include <QAudioOutput>
-#include <QBuffer>
 #endif
 
 #include <QFileDialog>
@@ -20,29 +17,27 @@
 SpeechDialog::SpeechDialog(QWidget *parent) :
     QDialog(parent),
     ui(new Ui::SpeechDialog),
-#if USE_MULTIMEDIA
+#ifndef NO_MULTIMEDIA
     format(),
-    output(),
-#endif
-    audioThread(),
     speechWorker(nullptr),
-    speechSynthesizer(new SpeechSynthesizer)
+#endif
+    speechSynthesizer(new SpeechSynthesizer),
+    waveGenerated(false),
+    waveData()
 {
     ui->setupUi(this);
 
-    // TODO: multimedia...
-    this->ui->toolButtonPlay->setVisible(false);
-    this->ui->toolButtonStop->setVisible(false);
-
-#if USE_MULTIMEDIA
+#ifndef NO_MULTIMEDIA
     // AquesTalk output format
     this->format.setChannelCount(1);
-    this->format.setCodec("audio/x-raw");
-    this->format.setSampleType(QAudioFormat::UnSignedInt);
+    this->format.setCodec("audio/pcm");
+    this->format.setByteOrder(QAudioFormat::LittleEndian);
+    this->format.setSampleType(QAudioFormat::SignedInt);
     this->format.setSampleRate(8000);
     this->format.setSampleSize(16);
-
-    this->output = QSharedPointer<QAudioOutput>(new QAudioOutput(this->format));
+#else
+    this->ui->toolButtonPlay->setVisible(false);
+    this->ui->toolButtonStop->setVisible(false);
 #endif
 }
 
@@ -56,65 +51,18 @@ void SpeechDialog::setSpeechCounter(const QSharedPointer<SpeechCounter> &counter
     // TODO: audio stop
 
     this->speechCounter = counter;
+    this->waveGenerated = false;
 
     if ( ! this->speechCounter ) {
         this->ui->webView->setHtml("");
         return;
     }
     this->ui->webView->setHtml(this->speechCounter->toRubyHtml());
-
-#if USE_MULTIMEDIA
-    this->ui->toolButtonPlay->setEnabled(false);
-    this->ui->toolButtonStop->setEnabled(false);
-
-    QString speech = this->speechCounter->toSpeech();
-    if ( speech.isEmpty() ) {
-        return;
-    }
-
-    QByteArray wave = this->speechSynthesizer->synthesize(speech);
-    if ( wave.isEmpty() ) {
-        return;
-    }
-
-    this->speechWorker = QSharedPointer<SpeechWorker>(new SpeechWorker(wave, this->format));
-    connect(this->speechWorker.data(), SIGNAL(ready()), this, SLOT(audioHasReady()));
-    this->speechWorker->start();
-#else
-    /*
-    QString speech = this->speechCounter->toSpeech();
-    if ( speech.isEmpty() ) {
-        return;
-    }
-
-    QByteArray wave = this->speechSynthesizer->synthesize(speech);
-    if ( wave.isEmpty() ) {
-        return;
-    }
-
-    this->speechWorker = QSharedPointer<SpeechWorker>(new SpeechWorker(wave));
-    this->speechWorker->moveToThread(&this->audioThread);
-    connect(this->ui->toolButtonPlay, SIGNAL(clicked()), this->speechWorker.data(), SLOT(play()));
-    connect(this->ui->toolButtonStop, SIGNAL(clicked()), this->speechWorker.data(), SLOT(stop()));
-    */
-#endif
 }
 
 void SpeechDialog::on_pushButtonSave_clicked()
 {
-    BusyAutoCursor cursor(this);
-    Q_UNUSED(cursor);
-
-    QString speech = this->speechCounter->toSpeech();
-    if ( speech.isEmpty() ) {
-        return;
-    }
-
-    QByteArray wave = this->speechSynthesizer->synthesize(speech);
-    if ( wave.isEmpty() ) {
-        QMessageBox::information(this, tr("Failed"), tr("Failed to synthesize."));
-        return;
-    }
+    this->waveGenerate();
 
     QString filePath = QFileDialog::getSaveFileName(this, tr("Save file name"), QString(), tr("Wave (*.wav)"));
     if ( filePath.isEmpty() ) {
@@ -132,30 +80,68 @@ void SpeechDialog::on_pushButtonSave_clicked()
         QMessageBox::warning(this, tr("Failed"), tr("Failed to write."));
         return;
     }
-    file.write(wave);
+    file.write(this->waveData);
     file.close();
 }
 
 void SpeechDialog::on_toolButtonPlay_clicked()
 {
-#if USE_MULTIMEDIA
+#ifndef NO_MULTIMEDIA
+    this->waveGenerate();
+
+    if ( ! this->speechWorker ) {
+        return;
+    }
+
     if ( this->speechWorker->state() != QAudio::ActiveState ) {
         QMetaObject::invokeMethod(this->speechWorker.data(), "play");
     } else {
-        QMetaObject::invokeMethod(this->speechWorker.data(), "resume");
+        QMetaObject::invokeMethod(this->speechWorker.data(), "pause");
     }
 #endif
 }
 
 void SpeechDialog::on_toolButtonStop_clicked()
 {
-#if USE_MULTIMEDIA
+#ifndef NO_MULTIMEDIA
+    if ( ! this->speechWorker ) {
+        return;
+    }
+
     QMetaObject::invokeMethod(this->speechWorker.data(), "stop");
 #endif
 }
 
-void SpeechDialog::audioHasReady()
+void SpeechDialog::closeEvent(QCloseEvent *)
 {
-    this->speechWorker->moveToThread(&this->audioThread);
-    this->ui->toolButtonPlay->setEnabled(true);
+#ifndef NO_MULTIMEDIA
+    if ( this->speechWorker ) {
+        this->speechWorker->stop();
+    }
+#endif
+}
+
+void SpeechDialog::waveGenerate()
+{
+    if ( this->waveGenerated ) {
+        return;
+    }
+    BusyAutoCursor cursor(this);
+    Q_UNUSED(cursor);
+
+    QString speech = this->speechCounter->toSpeech();
+    if ( speech.isEmpty() ) {
+        return;
+    }
+
+    QByteArray wave = this->speechSynthesizer->synthesize(speech);
+    if ( wave.isEmpty() ) {
+        return;
+    }
+    this->waveData = wave;
+    this->waveGenerated = true;
+
+#ifndef NO_MULTIMEDIA
+    this->speechWorker = QSharedPointer<SpeechWorker>(new SpeechWorker(this->waveData.mid(44), this->format));
+#endif
 }

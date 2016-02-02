@@ -6,7 +6,7 @@
 #include <QSharedPointer>
 #include <QThread>
 
-#if USE_MULTIMEDIA
+#ifndef NO_MULTIMEDIA
 #include <QAudioFormat>
 
 class QAudioDecoder;
@@ -36,20 +36,22 @@ public slots:
     void on_toolButtonPlay_clicked();
     void on_toolButtonStop_clicked();
 
-private slots:
-    void audioHasReady();
+protected:
+    void closeEvent(QCloseEvent *);
 
 private:
+    void waveGenerate();
+
     QSharedPointer<Ui::SpeechDialog> ui;
-#if USE_MULTIMEDIA
+#ifndef NO_MULTIMEDIA
     QAudioFormat format;
-    QSharedPointer<QAudioOutput> output;
-#endif
-    QThread audioThread;
     QSharedPointer<SpeechWorker> speechWorker;
+#endif
 
     QSharedPointer<SpeechCounter> speechCounter;
     QSharedPointer<SpeechSynthesizer> speechSynthesizer;
+    bool waveGenerated;
+    QByteArray waveData;
 
 };
 
