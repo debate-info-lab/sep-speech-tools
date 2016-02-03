@@ -27,6 +27,10 @@ bool SliderHook::eventFilter(QObject *obj, QEvent *event)
         return false;
     }
 
+    if ( ! this->target->isEnabled() ) {
+        return false;
+    }
+
     // from <http://stackoverflow.com/questions/11132597/qslider-mouse-direct-jump>
     int maximum = this->target->maximum();
     int minimum = this->target->minimum();
