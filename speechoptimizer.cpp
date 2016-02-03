@@ -18,7 +18,7 @@ SpeechOptimizer::SpeechOptimizer(MeCab::Tagger *tagger) :
     sokuon(QString::fromUtf8(u8"[\u30c3]")),
     ascii("[ -~]"),
     nums("\\d+"),
-    numKanji(QString::fromUtf8(u8"\uf9b2\u4e00\u4e8c\u4e09\u56db\u4e94\u516d\u4e03\u516b\u4e5d")),
+    numKanji(QString::fromUtf8(u8"\u96F6\u4e00\u4e8c\u4e09\u56db\u4e94\u516d\u4e03\u516b\u4e5d")),
     numPlace1(QString::fromUtf8(u8"\u3000\u5341\u767e\u5343")),
     numPlace2(QString::fromUtf8(u8"\u3000\u4e07\u5104\u5146\u4eac\u5793"))
 {
