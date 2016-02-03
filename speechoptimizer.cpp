@@ -157,7 +157,7 @@ QString SpeechOptimizer::toSpeech(const MeCabNode &node)
         return node.speech();
     } else if ( this->KUTOUTEN.indexOf(node.surface()) != -1 ) {
         // kutouten special case
-        return node.speech();
+        return node.surface();
     } else if ( this->nums.exactMatch(node.surface()) ) {
         // unparsed number case
         QString kanji = this->numToKanji(node.surface());
@@ -179,7 +179,7 @@ QString SpeechOptimizer::toSpeechForAquesTalk(const MeCabResult &nodes)
     int size = nodes.size();
     for ( int i = 0; i < size; ++i ) {
         const MeCabNode &node = nodes.at(i);
-        qDebug() << node.surface() << node.feature();
+        //qDebug() << node.surface() << node.feature();
         result += this->toSpeechForAquesTalk(node);
         if ( node.parts() == this->JOSHI &&
              i + 1 < size &&
@@ -196,7 +196,9 @@ QString SpeechOptimizer::toSpeechForAquesTalk(const MeCabNode &node)
     QString speech = this->toSpeech(node);
     if ( surface == "." || surface == "!" || surface == "?" ) {
         speech = this->KUTEN;
-    } else if ( node.parts() == this->KIGOU && this->KUTOUTEN.indexOf(surface) == -1 ) {
+    } else if ( node.parts() == this->KIGOU &&
+                surface != this->PERCENT &&
+                this->KUTOUTEN.indexOf(surface) == -1 ) {
         speech = this->TOUTEN;
     }
     return speech;
