@@ -52,5 +52,9 @@ QString MeCabNode::get_feature(int index) const
     if ( this->features_.size() <= index ) {
         return QString();
     }
-    return this->features_[index];
+    QString result = this->features_[index];
+    if ( result.trimmed() == "*" ) {
+        return QString();
+    }
+    return result;
 }

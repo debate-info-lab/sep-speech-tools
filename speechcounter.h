@@ -22,6 +22,10 @@ public:
     QString toRubyHtml();
     QString toSpeech();
 
+#ifndef NO_AQUESTALK
+    QString toSpeechForAquesTalk();
+#endif
+
 private:
     void parse();
 

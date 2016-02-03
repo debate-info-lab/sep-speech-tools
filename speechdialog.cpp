@@ -54,7 +54,9 @@ SpeechDialog::~SpeechDialog()
 
 void SpeechDialog::setSpeechCounter(const QSharedPointer<SpeechCounter> &counter)
 {
-    // TODO: audio stop
+    if ( this->speechWorker ) {
+        this->speechWorker->stop();
+    }
 
     this->speechCounter = counter;
     this->waveGenerated = false;
@@ -142,7 +144,11 @@ void SpeechDialog::waveGenerate()
     BusyAutoCursor cursor(this);
     Q_UNUSED(cursor);
 
+#ifndef NO_AQUESTALK
+    QString speech = this->speechCounter->toSpeechForAquesTalk();
+#else
     QString speech = this->speechCounter->toSpeech();
+#endif
     if ( speech.isEmpty() ) {
         return;
     }
@@ -155,6 +161,11 @@ void SpeechDialog::waveGenerate()
     this->waveGenerated = true;
 
 #ifndef NO_MULTIMEDIA
+    if ( this->speechWorker ) {
+        disconnect(this->speechWorker.data(), SIGNAL(ready()), this, SLOT(audioHasReady()));
+        disconnect(this->speechWorker.data(), SIGNAL(tick(int)), this->ui->horizontalSlider, SLOT(setValue(int)));
+        disconnect(this->ui->horizontalSlider, SIGNAL(valueChanged(int)), this->speechWorker.data(), SLOT(seek(int)));
+    }
     this->speechWorker = QSharedPointer<SpeechWorker>(new SpeechWorker(this->waveData.mid(44), this->format));
 
     connect(this->speechWorker.data(), SIGNAL(ready()), this, SLOT(audioHasReady()));

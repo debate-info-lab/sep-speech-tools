@@ -43,6 +43,9 @@ SpeechWorker::~SpeechWorker()
 
 void SpeechWorker::start()
 {
+    if ( this->data.isEmpty() ) {
+        return;
+    }
     emit this->ready();
 }
 

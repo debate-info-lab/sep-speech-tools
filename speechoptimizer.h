@@ -21,6 +21,11 @@ public:
     QString toSpeech(const MeCabResult &nodes);
     QString toSpeech(const MeCabNode &node);
 
+#ifndef NO_AQUESTALK
+    QString toSpeechForAquesTalk(const MeCabResult &nodes);
+    QString toSpeechForAquesTalk(const MeCabNode &node);
+#endif
+
 private:
     double calcSpeechCount(QString speech);
 
@@ -37,6 +42,8 @@ private:
     const QString KUTEN;
     const QString PERCENT;
     const QString SYOUSUU;
+    const QString JOSHI;
+    const QStringList KUTOUTEN;
 
     QRegExp katakana;
     QRegExp youon_kigou;
@@ -48,6 +55,7 @@ private:
     QString numKanji;
     QString numPlace1;
     QString numPlace2;
+
 
 };
 

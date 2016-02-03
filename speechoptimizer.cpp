@@ -14,6 +14,8 @@ SpeechOptimizer::SpeechOptimizer(MeCab::Tagger *tagger) :
     KUTEN(QString::fromUtf8(u8"\u3002")),
     PERCENT("%"),
     SYOUSUU(QString::fromUtf8(u8"\u5c11\u6570")),
+    JOSHI(QString::fromUtf8(u8"\u52a9\u8a5e")),
+    KUTOUTEN({this->TOUTEN, this->KUTEN, ",", ".", "!", "?"}),
     katakana(QString::fromUtf8(u8"[\u30a1-\u30fc]+")),
     youon_kigou(QString::fromUtf8(u8"[\u30a1\u30a3\u30a5\u30a7\u30a9\u30e3\u30e5\u30e7\u30ee\u30fb]")),
     sokuon(QString::fromUtf8(u8"[\u30c3]")),
@@ -78,32 +80,22 @@ double SpeechOptimizer::calcSpeechCount(const MeCabNode &node)
     }
 
     //qDebug() << node.surface() << node.feature();
-    // check KIGOU
-    if ( node.parts() == this->KIGOU ) {
+    if ( surface == this->KUTEN ) {
         // IDEOGRAPHIC FULL STOP special case
-        if ( surface == this->KUTEN ) {
-            return 1;
-        // FULLWIDTH PERCENT SIGN special case
-        } else if ( surface == this->PERCENT ) {
-            return 5;
-        }
+        return 1;
+    } else if ( surface == this->PERCENT ) {
+        // PERCENT SIGN special case
+        return this->calcSpeechCount(this->heuristicSpeech(surface));
+    } else if ( node.parts() == this->KIGOU ) {
+        // skip other symbol chars
         return 0;
     }
-    if ( node.hasSpeech() ) {
-        return this->calcSpeechCount(node.speech());
-    } else if ( this->nums.exactMatch(surface) ) {
-        // nums
-        // TODO: floating point number case
-        QString kanji = this->numToKanji(surface);
-        return this->calcSpeechCount(this->parse(kanji));
-    } else if ( node.parts_detail1() == this->SYOUSUU ) {
-        // floating point num
-        QString speech = this->heuristicSpeechForFloatingPoint(surface);
-        return this->calcSpeechCount(speech);
-    } else {
-        // no speech
+
+    QString speech = this->toSpeech(node);
+    if ( speech.trimmed().isEmpty() ) {
         return this->calcSpeechCount(surface);
     }
+    return this->calcSpeechCount(speech);
 }
 
 QString SpeechOptimizer::toRubyHtml(const MeCabResult &nodes)
@@ -120,29 +112,22 @@ QString SpeechOptimizer::toRubyHtml(const MeCabNode &node)
     // using classes:
     //   .kigou
     //   .no-ruby
+    //   .heuristic
 
     QString surface = node.surface();
-    if ( surface == this->TOUTEN || surface == this->KUTEN ) {
+    QString speech = this->toSpeech(node);
+    if ( this->KUTOUTEN.indexOf(surface) != -1 ) {
         // counted special case
         return surface;
-    } else if ( surface == this->PERCENT ) {
-        // percent special case
-        return QString::fromUtf8("<ruby>%1<rt>\u30d1\u30fc\u30bb\u30f3\u30c8</rt></ruby>").arg(surface);
-    } else if ( node.parts() == this->KIGOU ) {
+    } else if ( surface != this->PERCENT && node.parts() == this->KIGOU ) {
         // uncounted special case
         return QString("<span class=\"kigou\">%1</span>").arg(surface);
     } else if ( node.hasSpeech() ) {
         // speech
         return QString("<ruby>%1<rt>%2</rt></ruby>").arg(surface).arg(node.speech());
-    } else if ( this->nums.exactMatch(surface) ) {
-        // nums
-        QString kanji = this->numToKanji(surface);
-        QString speech = this->toSpeech(this->parse(kanji));
-        return QString("<ruby>%1<rt>%2</rt></ruby>").arg(surface).arg(speech);
-    } else if ( node.parts_detail1() == this->SYOUSUU ) {
-        // floating point num
-        QString speech = this->heuristicSpeechForFloatingPoint(surface);
-        return QString("<ruby>%1<rt>%2</rt></ruby>").arg(surface).arg(speech);
+    } else if ( ! speech.isEmpty() ) {
+        // heuristic
+        return QString("<ruby class=\"heuristic\">%1<rt>%2</rt></ruby>").arg(surface).arg(speech);
     } else {
         // unknown
         return QString("<span class=\"no-ruby\">%1</span>").arg(surface);
@@ -160,28 +145,67 @@ QString SpeechOptimizer::toSpeech(const MeCabResult &nodes)
 
 QString SpeechOptimizer::toSpeech(const MeCabNode &node)
 {
-    if ( node.hasSpeech() && node.speech() != "*" && node.parts() != this->KIGOU ) {
+    if ( node.hasSpeech() && node.parts() != this->KIGOU ) {
+        // speech (not kigou)
         return node.speech();
-    } else if ( node.surface() == this->TOUTEN || node.surface() == this->KUTEN ) {
+    } else if ( this->KUTOUTEN.indexOf(node.surface()) != -1 ) {
+        // kutouten special case
         return node.speech();
     } else if ( this->nums.exactMatch(node.surface()) ) {
+        // unparsed number case
         QString kanji = this->numToKanji(node.surface());
         return this->toSpeech(this->parse(kanji));
     } else if ( node.parts_detail1() == this->SYOUSUU ) {
         // floating point num
         return this->heuristicSpeechForFloatingPoint(node.surface());
     } else {
+        // unknown
         return this->heuristicSpeech(node.surface());
     }
 }
 
+#ifndef NO_AQUESTALK
+
+QString SpeechOptimizer::toSpeechForAquesTalk(const MeCabResult &nodes)
+{
+    QString result;
+    int size = nodes.size();
+    for ( int i = 0; i < size; ++i ) {
+        const MeCabNode &node = nodes.at(i);
+        qDebug() << node.surface() << node.feature();
+        result += this->toSpeechForAquesTalk(node);
+        if ( node.parts() == this->JOSHI &&
+             i + 1 < size &&
+             this->KUTOUTEN.indexOf(nodes.at(i+1).surface()) == -1 ) {
+            result += "+";
+        }
+    }
+    return result;
+}
+
+QString SpeechOptimizer::toSpeechForAquesTalk(const MeCabNode &node)
+{
+    QString surface = node.surface();
+    QString speech = this->toSpeech(node);
+    if ( surface == "." || surface == "!" || surface == "?" ) {
+        speech = this->KUTEN;
+    } else if ( node.parts() == this->KIGOU && this->KUTOUTEN.indexOf(surface) == -1 ) {
+        speech = this->TOUTEN;
+    }
+    return speech;
+}
+
+#endif // NO_AQUESTALK
+
 double SpeechOptimizer::calcSpeechCount(QString speech)
 {
     if ( this->katakana.exactMatch(speech) ) {
+        // all katakana case
         speech.remove(this->youon_kigou);
         int half_char = speech.split(this->sokuon).size() - 1;
         return speech.size() - half_char + 0.5 * half_char;
     } else {
+        // other case
         // TODO:
         qDebug() << speech;
         return speech.size();

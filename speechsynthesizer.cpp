@@ -33,6 +33,7 @@ public:
         int size = 0;
         unsigned char *ptr = AquesTalk_Synthe(indata.constData(), 100, &size);
         if ( ! ptr ) {
+            qDebug() << "Error:" << size;
             return QByteArray();
         }
         QByteArray result(reinterpret_cast<char *>(ptr), size);
@@ -80,7 +81,7 @@ public:
         int size = 0;
         unsigned char *ptr = AquesTalk_Synthe(indata.constData(), 100, &size);
         if ( ! ptr ) {
-            qDebug() << size;
+            qDebug() << "Error:" << size;
             return QByteArray();
         }
         QByteArray result(reinterpret_cast<char *>(ptr), size);

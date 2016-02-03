@@ -40,6 +40,7 @@ QString SpeechCounter::toRubyHtml()
                      "body { font-size: large; }" \
                      ".no-ruby { background-color: red; color: white; }" \
                      ".kigou { background-color: grey; color: white; }" \
+                     ".heuristic { background-color: yellow; color: red; }" \
                      "</style>" \
                      "</head>" \
                      "<body>";
@@ -51,6 +52,11 @@ QString SpeechCounter::toRubyHtml()
 QString SpeechCounter::toSpeech()
 {
     return this->optimizer->toSpeech(this->nodes);
+}
+
+QString SpeechCounter::toSpeechForAquesTalk()
+{
+    return this->optimizer->toSpeechForAquesTalk(this->nodes);
 }
 
 QString SpeechCounter::heuristicNormalize(QString sentence) const
