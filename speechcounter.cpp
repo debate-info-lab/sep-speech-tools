@@ -15,10 +15,10 @@
 SpeechCounter::SpeechCounter(MeCab::Tagger *tagger, const QString &sentence, QObject *parent) :
     QObject(parent),
     optimizer(new SpeechOptimizer(tagger)),
-    tagger(tagger),
     sentence(sentence),
     nodes()
 {
+    this->nodes = this->optimizer->parse(this->heuristicNormalize(this->sentence));
 }
 
 SpeechCounter::~SpeechCounter()
@@ -27,18 +27,13 @@ SpeechCounter::~SpeechCounter()
 
 double SpeechCounter::getSpeechCount()
 {
-    if ( ! this->tagger ) {
+    if ( this->nodes.isEmpty() ) {
         return -1;
     }
-
-    QByteArray utf8 = this->heuristicNormalize(this->sentence).toUtf8();
-    const MeCab::Node *node = this->tagger->parseToNode(utf8.constData(), utf8.size());
-    this->nodes = MeCabNode::create_nodes(node);
-
     return this->optimizer->calcSpeechCount(this->nodes);
 }
 
-QString SpeechCounter::toRubyHtml() const
+QString SpeechCounter::toRubyHtml()
 {
     QString result = "<head>" \
                      "<style>" \
@@ -53,13 +48,15 @@ QString SpeechCounter::toRubyHtml() const
     return result;
 }
 
-QString SpeechCounter::toSpeech() const
+QString SpeechCounter::toSpeech()
 {
     return this->optimizer->toSpeech(this->nodes);
 }
 
 QString SpeechCounter::heuristicNormalize(QString sentence) const
 {
+    sentence = sentence.normalized(QString::NormalizationForm_KC);
+
     QString result;
     QRegExp numComma("(\\d),(\\d)");
 

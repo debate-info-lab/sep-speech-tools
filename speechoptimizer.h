@@ -8,6 +8,8 @@ class SpeechOptimizer
 public:
     SpeechOptimizer(MeCab::Tagger *tagger);
 
+    MeCabResult parse(const QString &data);
+
     double calcSpeechCount(const MeCabResult &nodes);
     double calcSpeechCount(const MeCabNode &node);
 
@@ -24,7 +26,6 @@ private:
     QString heuristicSpeech(const QString &surface) const;
 
     QString numToKanji(const QString &numstr) const;
-    MeCabResult parse(const QString &data);
 
     MeCab::Tagger *tagger;
 

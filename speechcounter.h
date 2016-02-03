@@ -19,15 +19,16 @@ public:
 
     double getSpeechCount();
 
-    QString toRubyHtml() const;
-    QString toSpeech() const;
+    QString toRubyHtml();
+    QString toSpeech();
 
 private:
+    void parse();
+
     QString heuristicNormalize(QString sentence) const;
 
     QSharedPointer<SpeechOptimizer> optimizer;
 
-    MeCab::Tagger *tagger;
     QString sentence;
     MeCabResult nodes;
 

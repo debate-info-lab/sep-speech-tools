@@ -24,6 +24,18 @@ SpeechOptimizer::SpeechOptimizer(MeCab::Tagger *tagger) :
 {
 }
 
+MeCabResult SpeechOptimizer::parse(const QString &data)
+{
+    if ( ! this->tagger ) {
+        return MeCabResult();
+    }
+
+    QByteArray utf8 = data.toUtf8();
+
+    const MeCab::Node *node = this->tagger->parseToNode(utf8.constData(), utf8.size());
+    return MeCabNode::create_nodes(node);
+}
+
 double SpeechOptimizer::calcSpeechCount(const MeCabResult &nodes)
 {
     double ret = 0;
@@ -303,12 +315,4 @@ QString SpeechOptimizer::numToKanji(const QString &numstr) const
         return this->numKanji.at(0);
     }
     return result;
-}
-
-MeCabResult SpeechOptimizer::parse(const QString &data)
-{
-    QByteArray utf8 = data.toUtf8();
-
-    const MeCab::Node *node = this->tagger->parseToNode(utf8.constData(), utf8.size());
-    return MeCabNode::create_nodes(node);
 }
