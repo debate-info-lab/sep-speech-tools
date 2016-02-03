@@ -38,6 +38,7 @@ SpeechDialog::SpeechDialog(QWidget *parent) :
 #else
     this->ui->toolButtonPlay->setVisible(false);
     this->ui->toolButtonStop->setVisible(false);
+    this->ui->horizontalSlider->setVisible(false);
 #endif
 }
 
@@ -52,6 +53,7 @@ void SpeechDialog::setSpeechCounter(const QSharedPointer<SpeechCounter> &counter
 
     this->speechCounter = counter;
     this->waveGenerated = false;
+    this->ui->horizontalSlider->setEnabled(false);
 
     if ( ! this->speechCounter ) {
         this->ui->webView->setHtml("");
@@ -112,6 +114,12 @@ void SpeechDialog::on_toolButtonStop_clicked()
 #endif
 }
 
+void SpeechDialog::audioHasReady()
+{
+    this->ui->horizontalSlider->setEnabled(true);
+    this->ui->horizontalSlider->setMaximum(this->speechWorker->size());
+}
+
 void SpeechDialog::closeEvent(QCloseEvent *)
 {
 #ifndef NO_MULTIMEDIA
@@ -143,5 +151,11 @@ void SpeechDialog::waveGenerate()
 
 #ifndef NO_MULTIMEDIA
     this->speechWorker = QSharedPointer<SpeechWorker>(new SpeechWorker(this->waveData.mid(44), this->format));
+
+    connect(this->speechWorker.data(), SIGNAL(ready()), this, SLOT(audioHasReady()));
+    connect(this->speechWorker.data(), SIGNAL(tick(int)), this->ui->horizontalSlider, SLOT(setValue(int)));
+    connect(this->ui->horizontalSlider, SIGNAL(valueChanged(int)), this->speechWorker.data(), SLOT(seek(int)));
+    this->speechWorker->start();
+
 #endif
 }

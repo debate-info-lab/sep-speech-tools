@@ -36,6 +36,9 @@ public slots:
     void on_toolButtonPlay_clicked();
     void on_toolButtonStop_clicked();
 
+private slots:
+    void audioHasReady();
+
 protected:
     void closeEvent(QCloseEvent *);
 

@@ -3,6 +3,7 @@
 
 #include <QObject>
 #include <QSharedPointer>
+#include <QTimer>
 
 #ifndef NO_MULTIMEDIA
 #include <QAudio>
@@ -19,17 +20,31 @@ public:
     SpeechWorker(const QByteArray &data, const QAudioFormat &format);
     ~SpeechWorker();
 
+    void start();
     QAudio::State state() const;
+
+    int size() const;
+
+signals:
+    void ready();
+    void tick(int time);
 
 public slots:
     void play();
     void pause();
     void stop();
+    void seek(int time);
+
+private slots:
+    void timer_timeout();
 
 private:
+    QByteArray data;
     QSharedPointer<QAudioOutput> output;
     QSharedPointer<QBuffer> buffer;
-    QByteArray data;
+    QTimer timer;
+
+    static const int SAMPLE_SIZE = 16;
 
 };
 
