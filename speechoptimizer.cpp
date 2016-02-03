@@ -199,7 +199,7 @@ QString SpeechOptimizer::toSpeechForAquesTalk(const MeCabNode &node)
     } else if ( node.parts() == this->KIGOU &&
                 surface != this->PERCENT &&
                 this->KUTOUTEN.indexOf(surface) == -1 ) {
-        speech = this->TOUTEN;
+        speech = ",";
     }
     return speech;
 }
