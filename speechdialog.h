@@ -11,6 +11,8 @@
 
 class QAudioDecoder;
 class QAudioOutput;
+
+class SliderHook;
 #endif
 
 namespace Ui {
@@ -49,6 +51,7 @@ private:
 #ifndef NO_MULTIMEDIA
     QAudioFormat format;
     QSharedPointer<SpeechWorker> speechWorker;
+    QSharedPointer<SliderHook> sliderHook;
 #endif
 
     QSharedPointer<SpeechCounter> speechCounter;

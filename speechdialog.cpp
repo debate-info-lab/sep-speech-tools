@@ -1,9 +1,10 @@
 #include "speechdialog.h"
 #include "ui_speechdialog.h"
 
-#if USE_MULTIMEDIA
+#ifndef NO_MULTIMEDIA
 #include <QAudio>
-#include <QAudioFormat>
+
+#include "sliderhook.h"
 #endif
 
 #include <QFileDialog>
@@ -20,6 +21,7 @@ SpeechDialog::SpeechDialog(QWidget *parent) :
 #ifndef NO_MULTIMEDIA
     format(),
     speechWorker(nullptr),
+    sliderHook(nullptr),
 #endif
     speechSynthesizer(new SpeechSynthesizer),
     waveGenerated(false),
@@ -35,6 +37,9 @@ SpeechDialog::SpeechDialog(QWidget *parent) :
     this->format.setSampleType(QAudioFormat::SignedInt);
     this->format.setSampleRate(8000);
     this->format.setSampleSize(16);
+
+    this->sliderHook = QSharedPointer<SliderHook>(new SliderHook(this->ui->horizontalSlider));
+    this->ui->horizontalSlider->installEventFilter(this->sliderHook.data());
 #else
     this->ui->toolButtonPlay->setVisible(false);
     this->ui->toolButtonStop->setVisible(false);
