@@ -29,6 +29,11 @@ MeCabNode MeCabNode::create(const MeCab::Node *node)
     return MeCabNode(surface, feature, node->cost);
 }
 
+MeCabNode MeCabNode::create_dummy(const QString &surface, const QString &feature, int cost)
+{
+    return MeCabNode(surface, feature, cost);
+}
+
 MeCabResult MeCabNode::create_nodes(const MeCab::Node *node)
 {
     MeCabResult result;

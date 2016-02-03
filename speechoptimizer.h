@@ -1,6 +1,8 @@
 #ifndef SPEECHOPTIMIZER_H
 #define SPEECHOPTIMIZER_H
 
+#include <QMap>
+
 #include "mecabnode.h"
 
 class SpeechOptimizer
@@ -23,7 +25,8 @@ private:
     double calcSpeechCount(QString speech);
 
     void heuristicInitialize() const;
-    QString heuristicSpeech(const QString &surface) const;
+    QString heuristicSpeech(const QString &surface, const QMap<QChar, QString> &special={}) const;
+    QString heuristicSpeechForFloatingPoint(const QString &surface) const;
 
     QString numToKanji(const QString &numstr) const;
 
@@ -33,6 +36,7 @@ private:
     const QString TOUTEN;
     const QString KUTEN;
     const QString PERCENT;
+    const QString SYOUSUU;
 
     QRegExp katakana;
     QRegExp youon_kigou;

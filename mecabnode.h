@@ -52,6 +52,7 @@ public:
     { return ! this->speech().isEmpty(); }
 
     static MeCabNode create(const MeCab::Node *node);
+    static MeCabNode create_dummy(const QString &surface, const QString &feature, int cost=-1);
     static MeCabResult create_nodes(const MeCab::Node *node);
 
 private:

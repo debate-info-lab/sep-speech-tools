@@ -13,6 +13,7 @@ SpeechOptimizer::SpeechOptimizer(MeCab::Tagger *tagger) :
     TOUTEN(QString::fromUtf8(u8"\u3001")),
     KUTEN(QString::fromUtf8(u8"\u3002")),
     PERCENT("%"),
+    SYOUSUU(QString::fromUtf8(u8"\u5c11\u6570")),
     katakana(QString::fromUtf8(u8"[\u30a1-\u30fc]+")),
     youon_kigou(QString::fromUtf8(u8"[\u30a1\u30a3\u30a5\u30a7\u30a9\u30e3\u30e5\u30e7\u30ee\u30fb]")),
     sokuon(QString::fromUtf8(u8"[\u30c3]")),
@@ -33,7 +34,26 @@ MeCabResult SpeechOptimizer::parse(const QString &data)
     QByteArray utf8 = data.toUtf8();
 
     const MeCab::Node *node = this->tagger->parseToNode(utf8.constData(), utf8.size());
-    return MeCabNode::create_nodes(node);
+
+    MeCabResult nodes = MeCabNode::create_nodes(node);
+    MeCabResult result;
+    // TODO: optimize
+    int max = nodes.size();
+    for ( int i = 0; i < max; ++i ) {
+        MeCabNode node = nodes.at(i);
+        // for floating point number special case
+        if ( this->nums.exactMatch(node.surface()) &&
+             i + 2 < max &&
+             nodes.at(i+1).surface() == "." &&
+             this->nums.exactMatch(nodes.at(i+2).surface()) ) {
+            QStringList surfaces = {node.surface(), nodes.at(i+1).surface(), nodes.at(i+2).surface()};
+            result.append(MeCabNode::create_dummy(surfaces.join(""), QString::fromUtf8(u8"\u540d\u8a5e,\u5c11\u6570,*,*,*,*,*,,")));
+            i += 2;
+            continue;
+        }
+        result.append(node);
+    }
+    return result;
 }
 
 double SpeechOptimizer::calcSpeechCount(const MeCabResult &nodes)
@@ -76,6 +96,10 @@ double SpeechOptimizer::calcSpeechCount(const MeCabNode &node)
         // TODO: floating point number case
         QString kanji = this->numToKanji(surface);
         return this->calcSpeechCount(this->parse(kanji));
+    } else if ( node.parts_detail1() == this->SYOUSUU ) {
+        // floating point num
+        QString speech = this->heuristicSpeechForFloatingPoint(surface);
+        return this->calcSpeechCount(speech);
     } else {
         // no speech
         return this->calcSpeechCount(surface);
@@ -98,24 +122,29 @@ QString SpeechOptimizer::toRubyHtml(const MeCabNode &node)
     //   .no-ruby
 
     QString surface = node.surface();
-    // counted special case
     if ( surface == this->TOUTEN || surface == this->KUTEN ) {
+        // counted special case
         return surface;
     } else if ( surface == this->PERCENT ) {
+        // percent special case
         return QString::fromUtf8("<ruby>%1<rt>\u30d1\u30fc\u30bb\u30f3\u30c8</rt></ruby>").arg(surface);
-    // uncounted special case
     } else if ( node.parts() == this->KIGOU ) {
+        // uncounted special case
         return QString("<span class=\"kigou\">%1</span>").arg(surface);
-    // speech
     } else if ( node.hasSpeech() ) {
+        // speech
         return QString("<ruby>%1<rt>%2</rt></ruby>").arg(surface).arg(node.speech());
-    // nums
     } else if ( this->nums.exactMatch(surface) ) {
+        // nums
         QString kanji = this->numToKanji(surface);
         QString speech = this->toSpeech(this->parse(kanji));
         return QString("<ruby>%1<rt>%2</rt></ruby>").arg(surface).arg(speech);
-    // unknown
+    } else if ( node.parts_detail1() == this->SYOUSUU ) {
+        // floating point num
+        QString speech = this->heuristicSpeechForFloatingPoint(surface);
+        return QString("<ruby>%1<rt>%2</rt></ruby>").arg(surface).arg(speech);
     } else {
+        // unknown
         return QString("<span class=\"no-ruby\">%1</span>").arg(surface);
     }
 }
@@ -138,6 +167,9 @@ QString SpeechOptimizer::toSpeech(const MeCabNode &node)
     } else if ( this->nums.exactMatch(node.surface()) ) {
         QString kanji = this->numToKanji(node.surface());
         return this->toSpeech(this->parse(kanji));
+    } else if ( node.parts_detail1() == this->SYOUSUU ) {
+        // floating point num
+        return this->heuristicSpeechForFloatingPoint(node.surface());
     } else {
         return this->heuristicSpeech(node.surface());
     }
@@ -239,14 +271,16 @@ void SpeechOptimizer::heuristicInitialize() const
     HEURISTIC_MAP_INITIALIZED = true;
 }
 
-QString SpeechOptimizer::heuristicSpeech(const QString &surface) const
+QString SpeechOptimizer::heuristicSpeech(const QString &surface, const QMap<QChar, QString> &special) const
 {
     this->heuristicInitialize();
 
     QString result;
     for ( QChar ch : surface ) {
         ch = ch.toLower();
-        if ( HEURISTIC_MAP.find(ch) != HEURISTIC_MAP.end() ) {
+        if ( special.size() > 0 && special.find(ch) != special.end() ) {
+            result += special[ch];
+        } else if ( HEURISTIC_MAP.find(ch) != HEURISTIC_MAP.end() ) {
             result += HEURISTIC_MAP[ch];
         } else {
             // TODO:
@@ -254,6 +288,12 @@ QString SpeechOptimizer::heuristicSpeech(const QString &surface) const
         }
     }
     return result;
+}
+
+QString SpeechOptimizer::heuristicSpeechForFloatingPoint(const QString &surface) const
+{
+    QMap<QChar, QString> special = {{'.', QString::fromUtf8(u8"\u30c6\u30f3")}};
+    return this->heuristicSpeech(surface, special);
 }
 
 QString SpeechOptimizer::numToKanji(const QString &numstr) const
