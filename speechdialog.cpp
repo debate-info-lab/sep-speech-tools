@@ -153,7 +153,17 @@ void SpeechDialog::waveGenerate()
         return;
     }
 
-    QByteArray wave = this->speechSynthesizer->synthesize(speech);
+    QByteArray wave;
+    try {
+        wave = this->speechSynthesizer->synthesize(speech);
+#ifndef NO_AQUESTALK
+    } catch (const TooLongInputException &) {
+        QMessageBox::critical(this, tr("Error"), tr("Sentence is too long."));
+        return;
+#endif // NO_AQUESTALK
+    } catch (...) {
+        throw;
+    }
     if ( wave.isEmpty() ) {
         return;
     }

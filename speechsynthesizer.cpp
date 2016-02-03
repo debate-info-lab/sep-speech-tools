@@ -11,6 +11,13 @@ public:
 
 };
 
+#ifndef NO_AQUESTALK
+
+const char *TooLongInputException::what() const noexcept
+{
+    return "too long input.";
+}
+
 #if defined(Q_OS_LINUX)
 
 #include "utility.h"
@@ -34,6 +41,10 @@ public:
         unsigned char *ptr = AquesTalk_Synthe(indata.constData(), 100, &size);
         if ( ! ptr ) {
             qDebug() << "Error:" << size;
+            if ( size == 200 ) {
+                // Too long input
+                throw TooLongInputException();
+            }
             return QByteArray();
         }
         QByteArray result(reinterpret_cast<char *>(ptr), size);
@@ -82,6 +93,10 @@ public:
         unsigned char *ptr = AquesTalk_Synthe(indata.constData(), 100, &size);
         if ( ! ptr ) {
             qDebug() << "Error:" << size;
+            if ( size == 200 ) {
+                // Too long input
+                throw TooLongInputException();
+            }
             return QByteArray();
         }
         QByteArray result(reinterpret_cast<char *>(ptr), size);
@@ -99,6 +114,8 @@ private:
 
 #endif // Q_OS_LINUX | Q_OS_WIN
 
+#endif // NO_AQUESTALK
+
 SpeechSynthesizer::SpeechSynthesizer() :
 #if defined(Q_OS_LINUX)
     impl(new LinuxSpeechSynthesizerImpl)
@@ -114,8 +131,25 @@ QByteArray SpeechSynthesizer::synthesize(const QString &data)
     if ( ! this->impl ) {
         return QByteArray();
     }
+#ifndef NO_AQUESTALK
     QString TOUTEN = QString::fromUtf8(u8"\u3001");
-    return this->impl->synthesize(data.trimmed().replace(QRegExp("\\s+"), TOUTEN));
+    QString KUTEN = QString::fromUtf8(u8"\u3002");
+    QString replaced = data.trimmed().replace(QRegExp("\\s+"), TOUTEN);
+
+    QByteArray result;
+    for ( const QString &in : replaced.split(KUTEN) ) {
+        QByteArray temp = this->impl->synthesize(in + KUTEN);
+        if ( result.isEmpty() ) {
+            result = temp;
+        } else {
+            // 16bit 4096 frame no wave + WAVE header skipped raw data
+            result += QByteArray(8192, '\0') + temp.mid(44);
+        }
+    }
+    return result;
+#else
+    return this->impl->synthesize(data);
+#endif
 }
 
 

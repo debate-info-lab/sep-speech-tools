@@ -43,14 +43,21 @@ MeCabResult SpeechOptimizer::parse(const QString &data)
     int max = nodes.size();
     for ( int i = 0; i < max; ++i ) {
         MeCabNode node = nodes.at(i);
-        // for floating point number special case
         if ( this->nums.exactMatch(node.surface()) &&
              i + 2 < max &&
              nodes.at(i+1).surface() == "." &&
              this->nums.exactMatch(nodes.at(i+2).surface()) ) {
+            // for floating point number special case
             QStringList surfaces = {node.surface(), nodes.at(i+1).surface(), nodes.at(i+2).surface()};
             result.append(MeCabNode::create_dummy(surfaces.join(""), QString::fromUtf8(u8"\u540d\u8a5e,\u5c11\u6570,*,*,*,*,*,,")));
             i += 2;
+            continue;
+        } else if ( node.parts() == this->KIGOU &&
+                    node.surface().size() > 1 &&
+                    node.surface().startsWith("%") ) {
+            // for percent perse error
+            result.append(MeCabNode::create_dummy("%", node.feature(), node.cost()));
+            result.append(MeCabNode::create_dummy(node.surface().mid(1), node.feature(), node.cost()));
             continue;
         }
         result.append(node);
