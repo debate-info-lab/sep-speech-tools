@@ -6,10 +6,15 @@
 class SpeechOptimizer
 {
 public:
-    SpeechOptimizer();
+    SpeechOptimizer(MeCab::Tagger *tagger);
 
+    double calcSpeechCount(const MeCabResult &nodes);
     double calcSpeechCount(const MeCabNode &node);
+
+    QString toRubyHtml(const MeCabResult &nodes);
     QString toRubyHtml(const MeCabNode &node);
+
+    QString toSpeech(const MeCabResult &nodes);
     QString toSpeech(const MeCabNode &node);
 
 private:
@@ -17,6 +22,11 @@ private:
 
     void heuristicInitialize() const;
     QString heuristicSpeech(const QString &surface) const;
+
+    QString numToKanji(const QString &numstr) const;
+    MeCabResult parse(const QString &data);
+
+    MeCab::Tagger *tagger;
 
     const QString KIGOU;
     const QString TOUTEN;
@@ -28,6 +38,11 @@ private:
     QRegExp sokuon;
 
     QRegExp ascii;
+
+    QRegExp nums;
+    QString numKanji;
+    QString numPlace1;
+    QString numPlace2;
 
 };
 

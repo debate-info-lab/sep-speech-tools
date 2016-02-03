@@ -24,14 +24,8 @@ public:
 
 private:
     QString heuristicNormalize(QString sentence) const;
-    QString numToKanji(const QString &numstr) const;
 
     QSharedPointer<SpeechOptimizer> optimizer;
-
-    QRegExp commas;
-    QString numKanji;
-    QString numPlace1;
-    QString numPlace2;
 
     MeCab::Tagger *tagger;
     QString sentence;
