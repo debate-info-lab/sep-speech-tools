@@ -10,19 +10,11 @@
 #include <QString>
 #include <QStringList>
 
-static QMap<QChar, QString> HEURISTIC_MAP;
-static bool HEURISTIC_MAP_INITIALIZED = false;
+#include "speechoptimizer.h"
 
 SpeechCounter::SpeechCounter(MeCab::Tagger *tagger, const QString &sentence, QObject *parent) :
     QObject(parent),
-    KIGOU(QString::fromUtf8(u8"\u8a18\u53f7")),
-    TOUTEN(QString::fromUtf8(u8"\u3001")),
-    KUTEN(QString::fromUtf8(u8"\u3002")),
-    PERCENT("%"),
-    katakana(QString::fromUtf8(u8"[\u30a1-\u30fc]+")),
-    youon_kigou(QString::fromUtf8(u8"[\u30a1\u30a3\u30a5\u30a7\u30a9\u30e3\u30e5\u30e7\u30ee\u30fb]")),
-    sokuon(QString::fromUtf8(u8"[\u30c3]")),
-    ascii("[ -~]"),
+    optimizer(new SpeechOptimizer),
     commas(QString::fromUtf8(u8"[,\ufe50\uff0c]")),
     numKanji(QString::fromUtf8(u8"\uf9b2\u4e00\u4e8c\u4e09\u56db\u4e94\u516d\u4e03\u516b\u4e5d")),
     numPlace1(QString::fromUtf8(u8"\u3000\u5341\u767e\u5343")),
@@ -49,7 +41,7 @@ double SpeechCounter::getSpeechCount()
 
     double ret = 0;
     for (const MeCabNode &item : this->nodes) {
-        ret += this->nodeToSpeechCount(item);
+        ret += this->optimizer->calcSpeechCount(item);
     }
     return ret;
 }
@@ -64,23 +56,8 @@ QString SpeechCounter::toRubyHtml() const
                      "</style>" \
                      "</head>" \
                      "<body>";
-    for ( const MeCabNode &item : this->nodes ) {
-        QString surface = item.surface();
-        // counted special case
-        if ( surface == this->TOUTEN || surface == this->KUTEN ) {
-            result += item.surface();
-        } else if ( surface == this->PERCENT ) {
-            result += QString::fromUtf8("<ruby>%1<rt>\u30d1\u30fc\u30bb\u30f3\u30c8</rt></ruby>").arg(item.surface());
-        // uncounted special case
-        } else if ( item.parts() == this->KIGOU ) {
-            result += QString("<span class=\"kigou\">%1</span>").arg(item.surface());
-        // speech
-        } else if ( item.hasSpeech() ) {
-            result += QString("<ruby>%1<rt>%2</rt></ruby>").arg(item.surface()).arg(item.speech());
-        // unknown
-        } else {
-            result += QString("<span class=\"no-ruby\">%1</span>").arg(item.surface());
-        }
+    for ( const MeCabNode &node : this->nodes ) {
+        result += this->optimizer->toRubyHtml(node);
     }
     result += "</body>";
     return result;
@@ -89,59 +66,10 @@ QString SpeechCounter::toRubyHtml() const
 QString SpeechCounter::toSpeech() const
 {
     QString result;
-    for ( const MeCabNode &item : this->nodes ) {
-        if ( item.hasSpeech() && item.speech() != "*" && item.parts() != this->KIGOU ) {
-            result += item.speech();
-        } else if ( item.surface() == this->TOUTEN || item.surface() == this->KUTEN ) {
-            result += item.speech();
-        } else {
-            result += this->heuristicSpeech(item.surface());
-        }
+    for ( const MeCabNode &node : this->nodes ) {
+        result += this->optimizer->toSpeech(node);
     }
     return result;
-}
-
-double SpeechCounter::nodeToSpeechCount(const MeCabNode &node) const
-{
-    // special cases
-    if ( node.surface().isEmpty() ) {
-        return 0;
-    }
-    if ( node.feature().startsWith("BOS/EOS") ) {
-        return 0;
-    }
-
-    //qDebug() << node.surface() << node.feature();
-    // check KIGOU
-    if ( node.parts() == this->KIGOU ) {
-        // IDEOGRAPHIC FULL STOP special case
-        if ( node.surface() == this->KUTEN ) {
-            return 1;
-        // FULLWIDTH PERCENT SIGN special case
-        } else if ( node.surface() == this->PERCENT ) {
-            return 5;
-        }
-        return 0;
-    }
-    if ( node.hasSpeech() ) {
-        return this->calcSpeechCount(node.speech());
-    } else {
-        // no speech
-        return this->calcSpeechCount(node.surface());
-    }
-}
-
-double SpeechCounter::calcSpeechCount(QString speech) const
-{
-    if ( this->katakana.exactMatch(speech) ) {
-        speech.remove(this->youon_kigou);
-        int half_char = speech.split(this->sokuon).size() - 1;
-        return speech.size() - half_char + 0.5 * half_char;
-    } else {
-        // TODO:
-        qDebug() << speech;
-        return speech.size();
-    }
 }
 
 QString SpeechCounter::heuristicNormalize(QString sentence) const
@@ -222,108 +150,6 @@ QString SpeechCounter::numToKanji(const QString &numstr) const
     QString result = temp.join("");
     if ( result.isEmpty() ) {
         return this->numKanji.at(0);
-    }
-    return result;
-}
-
-void SpeechCounter::heuristicInitialize() const
-{
-    if ( HEURISTIC_MAP_INITIALIZED ) {
-        return;
-    }
-
-    HEURISTIC_MAP[' '] = QString();
-    HEURISTIC_MAP['"'] = QString();
-    HEURISTIC_MAP['#'] = QString();
-    HEURISTIC_MAP['$'] = QString::fromUtf8(u8"\u30c9\u30eb");
-    HEURISTIC_MAP['%'] = QString::fromUtf8(u8"\u30d1\u30fc\u30bb\u30f3\u30c8");
-    HEURISTIC_MAP['&'] = QString::fromUtf8(u8"\u30a2\u30f3\u30c9");
-    HEURISTIC_MAP['\''] = QString();
-    HEURISTIC_MAP['('] = QString();
-    HEURISTIC_MAP[')'] = QString();
-    HEURISTIC_MAP['*'] = QString();
-    HEURISTIC_MAP['+'] = QString::fromUtf8(u8"\u30d7\u30e9\u30b9");
-    HEURISTIC_MAP[','] = QString();
-    HEURISTIC_MAP['-'] = QString::fromUtf8(u8"\u30de\u30a4\u30ca\u30b9");
-    HEURISTIC_MAP['.'] = QString();
-    HEURISTIC_MAP['/'] = QString::fromUtf8(u8"\u30b9\u30e9\u30c3\u30b7\u30e5");
-
-    HEURISTIC_MAP['0'] = QString::fromUtf8(u8"\u30bc\u30ed");
-    HEURISTIC_MAP['1'] = QString::fromUtf8(u8"\u30a4\u30c1");
-    HEURISTIC_MAP['2'] = QString::fromUtf8(u8"\u30cb\u30fc");
-    HEURISTIC_MAP['3'] = QString::fromUtf8(u8"\u30b5\u30f3");
-    HEURISTIC_MAP['4'] = QString::fromUtf8(u8"\u30e8\u30f3");
-    HEURISTIC_MAP['5'] = QString::fromUtf8(u8"\u30b4\u30fc");
-    HEURISTIC_MAP['6'] = QString::fromUtf8(u8"\u30ed\u30af");
-    HEURISTIC_MAP['7'] = QString::fromUtf8(u8"\u30ca\u30ca");
-    HEURISTIC_MAP['8'] = QString::fromUtf8(u8"\u30cf\u30c1");
-    HEURISTIC_MAP['9'] = QString::fromUtf8(u8"\u30ad\u30e5\u30fc");
-
-    HEURISTIC_MAP[':'] = QString();
-    HEURISTIC_MAP[';'] = QString();
-    HEURISTIC_MAP['<'] = QString::fromUtf8(u8"\u30b7\u30e7\u30a6\u30ca\u30ea");
-    HEURISTIC_MAP['='] = QString::fromUtf8(u8"\u30a4\u30b3\u30fc\u30eb");
-    HEURISTIC_MAP['>'] = QString::fromUtf8(u8"\u30c0\u30a4\u30ca\u30ea");
-    HEURISTIC_MAP['?'] = QString();
-    HEURISTIC_MAP['@'] = QString::fromUtf8(u8"\u30a2\u30c3\u30c8");
-
-    HEURISTIC_MAP['a'] = QString::fromUtf8(u8"\u30a8\u30fc");
-    HEURISTIC_MAP['b'] = QString::fromUtf8(u8"\u30d3\u30fc");
-    HEURISTIC_MAP['c'] = QString::fromUtf8(u8"\u30b7\u30fc");
-    HEURISTIC_MAP['d'] = QString::fromUtf8(u8"\u30c7\u30a3\u30fc");
-    HEURISTIC_MAP['e'] = QString::fromUtf8(u8"\u30a4\u30fc");
-    HEURISTIC_MAP['f'] = QString::fromUtf8(u8"\u30a8\u30d5");
-    HEURISTIC_MAP['g'] = QString::fromUtf8(u8"\u30b8\u30fc");
-    HEURISTIC_MAP['h'] = QString::fromUtf8(u8"\u30a8\u30a4\u30c1");
-    HEURISTIC_MAP['i'] = QString::fromUtf8(u8"\u30a2\u30a4");
-    HEURISTIC_MAP['j'] = QString::fromUtf8(u8"\u30b8\u30a7\u30a4");
-    HEURISTIC_MAP['k'] = QString::fromUtf8(u8"\u30b1\u30a4");
-    HEURISTIC_MAP['l'] = QString::fromUtf8(u8"\u30a8\u30eb");
-    HEURISTIC_MAP['m'] = QString::fromUtf8(u8"\u30a8\u30e0");
-    HEURISTIC_MAP['n'] = QString::fromUtf8(u8"\u30a8\u30cc");
-    HEURISTIC_MAP['o'] = QString::fromUtf8(u8"\u30aa\u30fc");
-    HEURISTIC_MAP['p'] = QString::fromUtf8(u8"\u30d4\u30fc");
-    HEURISTIC_MAP['q'] = QString::fromUtf8(u8"\u30ad\u30e5\u30fc");
-    HEURISTIC_MAP['r'] = QString::fromUtf8(u8"\u30a2\u30fc\u30eb");
-    HEURISTIC_MAP['s'] = QString::fromUtf8(u8"\u30a8\u30b9");
-    HEURISTIC_MAP['t'] = QString::fromUtf8(u8"\u30c6\u30a3\u30fc");
-    HEURISTIC_MAP['u'] = QString::fromUtf8(u8"\u30e6\u30fc");
-    HEURISTIC_MAP['v'] = QString::fromUtf8(u8"\u30d6\u30a4");
-    HEURISTIC_MAP['w'] = QString::fromUtf8(u8"\u30c0\u30d6\u30ea\u30e5\u30fc");
-    HEURISTIC_MAP['x'] = QString::fromUtf8(u8"\u30a8\u30c3\u30af\u30b9");
-    HEURISTIC_MAP['y'] = QString::fromUtf8(u8"\u30ef\u30a4");
-    HEURISTIC_MAP['z'] = QString::fromUtf8(u8"\u30bc\u30c3\u30c8");
-
-    HEURISTIC_MAP['['] = QString();
-    HEURISTIC_MAP['\\'] = QString();
-    HEURISTIC_MAP[']'] = QString();
-    HEURISTIC_MAP['^'] = QString();
-    HEURISTIC_MAP['_'] = QString();
-    HEURISTIC_MAP['`'] = QString();
-
-    HEURISTIC_MAP['{'] = QString();
-    HEURISTIC_MAP['|'] = QString();
-    HEURISTIC_MAP['}'] = QString();
-    HEURISTIC_MAP['~'] = QString();
-
-    HEURISTIC_MAP_INITIALIZED = true;
-}
-
-QString SpeechCounter::heuristicSpeech(const QString &surface) const
-{
-    if ( ! HEURISTIC_MAP_INITIALIZED ) {
-        this->heuristicInitialize();
-    }
-
-    QString result;
-    for ( QChar ch : surface ) {
-        ch = ch.toLower();
-        if ( HEURISTIC_MAP.find(ch) != HEURISTIC_MAP.end() ) {
-            result += HEURISTIC_MAP[ch];
-        } else {
-            // TODO:
-            result += " ";
-        }
     }
     return result;
 }

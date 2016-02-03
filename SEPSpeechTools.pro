@@ -24,7 +24,8 @@ SOURCES += \
     speechsynthesizer.cpp \
     speechdialog.cpp \
     speechworker.cpp \
-    sliderhook.cpp
+    sliderhook.cpp \
+    speechoptimizer.cpp
 
 HEADERS  += \
     mainwindow.h \
@@ -36,7 +37,8 @@ HEADERS  += \
     speechsynthesizer.h \
     speechdialog.h \
     speechworker.h \
-    sliderhook.h
+    sliderhook.h \
+    speechoptimizer.h
 
 FORMS    += \
     mainwindow.ui \

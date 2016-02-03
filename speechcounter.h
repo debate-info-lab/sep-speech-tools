@@ -2,10 +2,13 @@
 #define SPEECHCOUNTER_H
 
 #include <QObject>
+#include <QSharedPointer>
 
 #include <QRegExp>
 
 #include "mecabnode.h"
+
+class SpeechOptimizer;
 
 class SpeechCounter : public QObject
 {
@@ -20,25 +23,10 @@ public:
     QString toSpeech() const;
 
 private:
-    double nodeToSpeechCount(const MeCabNode &node) const;
-    double calcSpeechCount(QString speech) const;
-
     QString heuristicNormalize(QString sentence) const;
     QString numToKanji(const QString &numstr) const;
 
-    void heuristicInitialize() const;
-    QString heuristicSpeech(const QString &surface) const;
-
-    const QString KIGOU;
-    const QString TOUTEN;
-    const QString KUTEN;
-    const QString PERCENT;
-
-    QRegExp katakana;
-    QRegExp youon_kigou;
-    QRegExp sokuon;
-
-    QRegExp ascii;
+    QSharedPointer<SpeechOptimizer> optimizer;
 
     QRegExp commas;
     QString numKanji;
