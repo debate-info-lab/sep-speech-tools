@@ -2,6 +2,8 @@
 
 #include <QDebug>
 
+#include "wave.h"
+
 class SpeechSynthesizerImpl
 {
 public:
@@ -136,17 +138,20 @@ QByteArray SpeechSynthesizer::synthesize(const QString &data)
     QString KUTEN = QString::fromUtf8(u8"\u3002");
     QString replaced = data.trimmed().replace(QRegExp("\\s+"), TOUTEN);
 
-    QByteArray result;
+    QByteArray rawData;
     for ( const QString &in : replaced.split(KUTEN) ) {
-        QByteArray temp = this->impl->synthesize(in + KUTEN);
-        if ( result.isEmpty() ) {
-            result = temp;
+        // raw PCM
+        QByteArray temp = this->impl->synthesize(in + KUTEN).mid(44);
+        if ( rawData.isEmpty() ) {
+            rawData = temp;
         } else {
-            // 16bit 4096 frame no wave + WAVE header skipped raw data
-            result += QByteArray(8192, '\0') + temp.mid(44);
+            // 16bit 4096 frame flat wave + raw PCM
+            rawData += QByteArray(8192, '\0') + temp;
         }
     }
-    return result;
+
+    Wave wave(WaveFormat(WaveFormat::PCM, 1, 8000, 16));
+    return wave.build(rawData);
 #else
     return this->impl->synthesize(data);
 #endif
