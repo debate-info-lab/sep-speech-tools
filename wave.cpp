@@ -9,6 +9,7 @@ class SeekContext
 {
 public:
     SeekContext(QIODevice *device, qint64 pos) :
+        device_(device),
         before_(device->pos())
     {
         this->device_->seek(pos);
@@ -80,6 +81,11 @@ Chunk::~Chunk()
 
 }
 
+void Chunk::skip()
+{
+    this->device_->seek(this->pos() + this->size());
+}
+
 QByteArray Chunk::data()
 {
     SeekContext ctx(this->device_, this->pos_);
@@ -98,41 +104,140 @@ QByteArray Chunk::makeChunk(uint32_t header, const QByteArray &data)
 
 
 WaveFormat::WaveFormat(uint16_t format, uint16_t channels, uint32_t framerate, uint16_t bitsPerSample) :
-    format(format),
-    channels(channels),
-    framerate(framerate),
-    bitsPerSample(bitsPerSample)
+    format_(format),
+    channels_(channels),
+    framerate_(framerate),
+    bitsPerSample_(bitsPerSample)
 {
 
 }
 
 QByteArray WaveFormat::toByteArray() const
 {
-    return from_uint16_le(this->format) +
-            from_uint16_le(this->channels) +
-            from_uint32_le(this->framerate) +
+    return from_uint16_le(this->format_) +
+            from_uint16_le(this->channels_) +
+            from_uint32_le(this->framerate_) +
             from_uint32_le(this->avgBytesPerSec()) +
             from_uint16_le(this->blockAlign()) +
-            from_uint16_le(this->bitsPerSample);
+            from_uint16_le(this->bitsPerSample_);
 }
 
 
+Wave::~Wave()
+{
 
-Wave::Wave(const WaveFormat &format) :
+}
+
+const QByteArray Wave::data()
+{
+    SeekContext ctx(this->device_, this->pos_);
+    return this->device_->read(this->size_);
+}
+
+Wave Wave::create(QIODevice *device)
+{
+    Chunk riff(device);
+    if ( riff.header() != Header::RIFF ) {
+        throw RIFFException();
+    }
+
+    uint32_t wave = to_uint32_le(device->read(4));
+    if ( wave != Header::WAVE ) {
+        throw RIFFWaveException();
+    }
+
+    uint16_t formatID;
+    uint16_t channels;
+    uint32_t framerate;
+    uint32_t avgBytesPerSec;
+    uint16_t blockAlign;
+    uint16_t bitsPerSample;
+    bool fmtReaded = false;
+    while ( ! device->atEnd() ) {
+        Chunk chunk(device);
+        if ( chunk.header() == Header::fmt_ ) {
+            formatID = to_uint16_le(device->read(2));
+            if ( formatID != WaveFormat::PCM ) {
+                throw UnknownFormatException();
+            }
+            channels = to_uint16_le(device->read(2));
+            framerate = to_uint32_le(device->read(4));
+            avgBytesPerSec = to_uint32_le(device->read(4));
+            blockAlign = to_uint16_le(device->read(2));
+            bitsPerSample = to_uint16_le(device->read(2));
+            fmtReaded = true;
+        } else if ( chunk.header() == Header::data ) {
+            if ( ! fmtReaded ) {
+                throw DataChunkException();
+            }
+            WaveFormat format(formatID, channels, framerate, bitsPerSample);
+            if ( format.avgBytesPerSec() != avgBytesPerSec ||
+                 format.blockAlign() != blockAlign ) {
+                throw ParameterException();
+            }
+            return Wave(device, format, device->pos(), chunk.size());
+        }
+        chunk.skip();
+    }
+    throw ChunkMissingException();
+}
+
+Wave::Wave(QIODevice *device, const WaveFormat &format, qint64 pos, uint32_t size) :
+    device_(device),
+    format_(format),
+    pos_(pos),
+    size_(size)
+{
+
+}
+
+
+WaveBuilder::WaveBuilder(const WaveFormat &format) :
     format(format)
 {
 
 }
 
-QByteArray Wave::build(const QByteArray &data) const
+QByteArray WaveBuilder::build(const QByteArray &data) const
 {
     QByteArray fmt_ = this->format.toByteArray();
 
-    QByteArray dataChunk = Chunk::makeChunk(Header::data, data.size());
-    QByteArray fmt_Chunk = Chunk::makeChunk(Header::fmt_, fmt_.size());
-    QByteArray wave = from_uint32_le(Header::WAVE);
+    QByteArray dataChunk = Chunk::makeChunk(Wave::Header::data, data.size());
+    QByteArray fmt_Chunk = Chunk::makeChunk(Wave::Header::fmt_, fmt_.size());
+    QByteArray wave = from_uint32_le(Wave::Header::WAVE);
 
     QByteArray waveHeader = wave + fmt_Chunk + fmt_ + dataChunk;
-    QByteArray riffChunk = Chunk::makeChunk(Header::RIFF, waveHeader.size() + data.size());
+    QByteArray riffChunk = Chunk::makeChunk(Wave::Header::RIFF, waveHeader.size() + data.size());
     return riffChunk + waveHeader + data;
+}
+
+
+const char *RIFFException::what() const noexcept
+{
+    return "file does not start with RIFF id";
+}
+
+const char *RIFFWaveException::what() const noexcept
+{
+    return "not a WAVE file";
+}
+
+const char *UnknownFormatException::what() const noexcept
+{
+    return "unknown format";
+}
+
+const char *DataChunkException::what() const noexcept
+{
+    return "data chunk before fmt chunk";
+}
+
+const char *ParameterException::what() const noexcept
+{
+    return "parameter does not match";
+}
+
+const char *ChunkMissingException::what() const noexcept
+{
+    return "fmt chunk and/or data chunk missing";
 }

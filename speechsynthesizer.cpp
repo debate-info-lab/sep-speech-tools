@@ -2,7 +2,11 @@
 
 #include <QDebug>
 
+#ifndef NO_AQUESTALK
+#include <QBuffer>
+
 #include "wave.h"
+#endif
 
 class SpeechSynthesizerImpl
 {
@@ -150,8 +154,8 @@ QByteArray SpeechSynthesizer::synthesize(const QString &data)
         }
     }
 
-    Wave wave(WaveFormat(WaveFormat::PCM, 1, 8000, 16));
-    return wave.build(rawData);
+    WaveBuilder builder(WaveFormat(WaveFormat::PCM, 1, 8000, 16));
+    return builder.build(rawData);
 #else
     return this->impl->synthesize(data);
 #endif
