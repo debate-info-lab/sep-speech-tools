@@ -114,5 +114,7 @@ bool PreferenceDialog::isSysDictDir(const QString &dirPath) const
 
 bool PreferenceDialog::isUserDictFile(const QString &filePath) const
 {
-    return ( QFileInfo(filePath).exists() );
+    QFileInfo info(filePath);
+    return ( info.exists() &&
+             info.suffix() == "dic" );
 }
