@@ -33,13 +33,20 @@ MainWindow::MainWindow(QWidget *parent) :
 
 MainWindow::~MainWindow()
 {
-    if ( tagger ) {
-        MeCab::deleteTagger(tagger);
+    if ( this->tagger ) {
+        MeCab::deleteTagger(this->tagger);
     }
 }
 
 void MainWindow::initializeTagger(QString dictPath, QString userDictPath)
 {
+    if ( this->tagger ) {
+        this->speechDialog->close();
+        this->speechCounter.reset();
+        this->speechDialog->setSpeechCounter(this->speechCounter);
+        MeCab::deleteTagger(this->tagger);
+    }
+
     if ( dictPath.isEmpty() ) {
         dictPath = this->preference->getSysDictDir();
     }

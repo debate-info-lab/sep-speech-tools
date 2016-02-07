@@ -26,7 +26,7 @@ public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
 
-    void initializeTagger(QString dictPath, QString userDictPath=QString());
+    void initializeTagger(QString dictPath=QString(), QString userDictPath=QString());
 
 public slots:
     // actions
