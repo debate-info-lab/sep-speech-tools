@@ -99,7 +99,7 @@ double SpeechOptimizer::calcSpeechCount(const MeCabNode &node)
     }
 
     QString speech = this->toSpeech(node);
-    if ( speech.trimmed().isEmpty() ) {
+    if ( speech.indexOf(" ") != -1 ) {
         return this->calcSpeechCount(surface);
     }
     return this->calcSpeechCount(speech);
@@ -132,12 +132,12 @@ QString SpeechOptimizer::toRubyHtml(const MeCabNode &node)
     } else if ( node.hasSpeech() ) {
         // speech
         return QString("<ruby>%1<rt>%2</rt></ruby>").arg(surface).arg(node.speech());
-    } else if ( ! speech.isEmpty() ) {
+    } else if ( speech.indexOf(" ") == -1 ) {
         // heuristic
         return QString("<ruby class=\"heuristic\">%1<rt>%2</rt></ruby>").arg(surface).arg(speech);
     } else {
         // unknown
-        return QString("<span class=\"no-ruby\">%1</span>").arg(surface);
+        return QString("<span class=\"no-ruby\">%1<rt>%2</rt></span>").arg(surface).arg(speech);
     }
 }
 
