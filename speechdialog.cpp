@@ -54,9 +54,11 @@ SpeechDialog::~SpeechDialog()
 
 void SpeechDialog::setSpeechCounter(const QSharedPointer<SpeechCounter> &counter)
 {
+#ifndef NO_MULTIMEDIA
     if ( this->speechWorker ) {
         this->speechWorker->stop();
     }
+#endif
 
     this->speechCounter = counter;
     this->waveGenerated = false;
@@ -123,8 +125,10 @@ void SpeechDialog::on_toolButtonStop_clicked()
 
 void SpeechDialog::audioHasReady()
 {
+#ifndef NO_MULTIMEDIA
     this->ui->horizontalSlider->setEnabled(true);
     this->ui->horizontalSlider->setMaximum(this->speechWorker->size());
+#endif
 }
 
 void SpeechDialog::closeEvent(QCloseEvent *)

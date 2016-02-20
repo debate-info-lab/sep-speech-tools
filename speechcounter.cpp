@@ -54,10 +54,12 @@ QString SpeechCounter::toSpeech()
     return this->optimizer->toSpeech(this->nodes);
 }
 
+#ifndef NO_AQUESTALK
 QString SpeechCounter::toSpeechForAquesTalk()
 {
     return this->optimizer->toSpeechForAquesTalk(this->nodes);
 }
+#endif
 
 QString SpeechCounter::heuristicNormalize(QString sentence) const
 {

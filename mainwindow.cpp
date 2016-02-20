@@ -16,7 +16,7 @@
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow),
-#if defined(Q_OS_LINUX)
+#if defined(Q_OS_LINUX) || defined(Q_OS_MAC)
     settings(new QSettings()),
 #elif defined(Q_OS_WIN32) || defined(Q_OS_CYGWIN)
     settings(new QSettings(QSettings::IniFormat, QSettings::UserScope, QCoreApplication::organizationName())),

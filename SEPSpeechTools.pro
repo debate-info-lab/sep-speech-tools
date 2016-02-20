@@ -57,6 +57,13 @@ unix{
     include(config/unix.pri)
     include(config/unix_path.pri)
 }
+linux {
+    include(config/linux.pri)
+}
+mac {
+    include(config/mac.pri)
+    include(config/mac_path.pri)
+}
 win32{
     include(config/windows.pri)
     include(config/windows_path.pri)

@@ -59,6 +59,41 @@ public:
     }
 };
 
+#elif defined(Q_OS_MAC)
+
+#include "utility.h"
+
+#ifdef __cplusplus
+extern "C"{
+#endif // __cplusplus
+unsigned char * (AquesTalk2_Synthe_Utf8)(const char *koe, int iSpeed, int *pSize, void *phontDat);
+void (AquesTalk2_FreeWave)(unsigned char *wav);
+#ifdef __cplusplus
+}
+#endif // __cplusplus
+
+class MacSpeechSynthesizerImpl : public SpeechSynthesizerImpl
+{
+public:
+    QByteArray synthesize(const QString &data)
+    {
+        QByteArray indata = toLocalEncoding(data);
+        int size = 0;
+        unsigned char *ptr = AquesTalk2_Synthe_Utf8(indata.constData(), 100, &size, nullptr);
+        if ( ! ptr ) {
+            qDebug() << "Error:" << size;
+            if ( size == 200 ) {
+                // Too long input
+                throw TooLongInputException();
+            }
+            return QByteArray();
+        }
+        QByteArray result(reinterpret_cast<char *>(ptr), size);
+        AquesTalk2_FreeWave(ptr);
+        return result;
+    }
+};
+
 #elif defined(Q_OS_WIN)
 
 #include <QCoreApplication>
@@ -118,16 +153,22 @@ private:
 
 };
 
-#endif // Q_OS_LINUX | Q_OS_WIN
+#endif // Q_OS_LINUX | Q_OS_MAC | Q_OS_WIN
 
 #endif // NO_AQUESTALK
 
 SpeechSynthesizer::SpeechSynthesizer() :
+#ifndef NO_AQUESTALK
 #if defined(Q_OS_LINUX)
     impl(new LinuxSpeechSynthesizerImpl)
+#elif defined(Q_OS_MAC)
+    impl(new MacSpeechSynthesizerImpl)
 #elif defined(Q_OS_WIN)
     impl(new WindowsSpeechSynthesizerImpl)
 #endif
+#else
+    impl()
+#endif // NO_AQUESTALK
 {
 
 }

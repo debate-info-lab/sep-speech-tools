@@ -6,7 +6,7 @@
 
 QByteArray toLocalEncoding(const QString &string)
 {
-#if defined(Q_OS_LINUX)
+#if defined(Q_OS_LINUX) || defined(Q_OS_MAC)
     return toUtf8Encoding(string);
 #elif defined(Q_OS_WIN32) || defined(Q_OS_CYGWIN)
     return toSJisEncoding(string);

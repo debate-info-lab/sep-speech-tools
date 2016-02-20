@@ -1,4 +1,6 @@
 *.pri
 
+!linux.pri
 !unix.pri
+!mac.pri
 !windows.pri
