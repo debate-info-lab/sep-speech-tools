@@ -35,7 +35,14 @@ QString PreferenceDialog::getSysDictDir() const
 {
     // default dir
     QDir dictDir(QCoreApplication::applicationDirPath());
+#if ! defined(Q_OS_MAC)
     dictDir.cd("dict");
+#else
+    dictDir.cdUp(); // MacOS
+    dictDir.cdUp(); // Contents
+    dictDir.cdUp(); // SEPSpeechTools.app
+    dictDir.cd("dict");
+#endif
     // get dir
     return this->settings->value("dict/system", dictDir.absolutePath()).toString();
 }
