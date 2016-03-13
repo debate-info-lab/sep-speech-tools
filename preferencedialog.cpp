@@ -34,16 +34,14 @@ PreferenceDialog::~PreferenceDialog()
 QString PreferenceDialog::getSysDictDir() const
 {
     // default dir
-    QDir dictDir(QCoreApplication::applicationDirPath());
-#if ! defined(Q_OS_MAC)
-    dictDir.cd("dict");
-#else
-    dictDir.cdUp(); // MacOS
-    dictDir.cdUp(); // Contents
-    dictDir.cdUp(); // SEPSpeechTools.app
-    dictDir.cd("dict");
+    QDir appDir(QCoreApplication::applicationDirPath());
+#if defined(Q_OS_MAC)
+    appDir.cdUp(); // MacOS
+    appDir.cdUp(); // Contents
+    appDir.cdUp(); // *.app
 #endif
     // get dir
+    QDir dictDir(appDir.filePath("dict"));
     return this->settings->value("dict/system", dictDir.absolutePath()).toString();
 }
 
