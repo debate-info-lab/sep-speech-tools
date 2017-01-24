@@ -65,10 +65,10 @@ void SpeechDialog::setSpeechCounter(const QSharedPointer<SpeechCounter> &counter
     this->ui->horizontalSlider->setEnabled(false);
 
     if ( ! this->speechCounter ) {
-        this->ui->webView->setHtml("");
+        this->ui->webEngineView->setHtml("");
         return;
     }
-    this->ui->webView->setHtml(this->speechCounter->toRubyHtml());
+    this->ui->webEngineView->setHtml(this->speechCounter->toRubyHtml());
 }
 
 void SpeechDialog::on_pushButtonSave_clicked()

@@ -3,7 +3,7 @@
 
 #include <QDir>
 #include <QSettings>
-#include <QWebView>
+#include <QWebEngineView>
 
 #include <mecab.h>
 

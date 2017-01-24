@@ -4,9 +4,8 @@
 #
 #-------------------------------------------------
 
-QT       += core gui webkit
+QT       += core gui widgets webenginewidgets multimedia
 
-greaterThan(QT_MAJOR_VERSION, 4): QT += widgets webkitwidgets multimedia
 
 TARGET = SEPSpeechTools
 TEMPLATE = app
