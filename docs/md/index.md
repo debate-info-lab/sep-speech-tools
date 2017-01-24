@@ -1,7 +1,7 @@
 title: SEPSpeechTools
 
 
-# SPESpeechTools
+# SEPSpeechTools
 
 文章のよみがなを取得し、母音数を数え上げるツールです。
 

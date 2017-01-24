@@ -53,16 +53,21 @@ void MainWindow::initializeTagger(QString dictPath, QString userDictPath)
     if ( userDictPath.isEmpty() ) {
         userDictPath = this->preference->getUserDictFile();
     }
+
+    QDir appDir(QCoreApplication::applicationDirPath());
+#if defined(Q_OS_MAC)
+    appDir.cdUp(); // MacOS
+    appDir.cdUp(); // Contents
+    appDir.cdUp(); // *.app
+#endif
+
     // build args
     QStringList taggerArgs;
     taggerArgs.append(QCoreApplication::applicationFilePath()); // argv[0]
     taggerArgs.append("-U");
     taggerArgs.append("Unknown");
-#if defined(Q_OS_WIN)
-    QDir appDir(QCoreApplication::applicationDirPath());
     taggerArgs.append("-r");
     taggerArgs.append(appDir.filePath("mecabrc"));
-#endif
     taggerArgs.append("-d");
     taggerArgs.append(dictPath + "/");
     if ( ! userDictPath.isEmpty() ) {
