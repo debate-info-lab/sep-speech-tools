@@ -2,7 +2,7 @@
 
 文章のよみがなを取得し、母音数を数え上げるツールです。
 
-![mainwindow-2.png](./docs/img/mainwindow-2.png)
+![mainwindow-2.png](./docs/html/html/img/mainwindow-2.png)
 
 ## 数え上げルール
 
